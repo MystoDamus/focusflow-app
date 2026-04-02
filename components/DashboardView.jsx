@@ -1,5 +1,9 @@
+import { useMemo, useState } from "react";
+import CalendarPage from "./CalendarPage";
 import CompanionPanel from "./CompanionPanel";
 import HeroPanel from "./HeroPanel";
+import LeaderboardPage from "./LeaderboardPage";
+import NotesPage from "./NotesPage";
 import QuestPanel from "./QuestPanel";
 import TimerPanel from "./TimerPanel";
 
@@ -76,11 +80,62 @@ function DashboardView({
   onOpenFlashcards,
   onOpenQuiz,
   onOpenPlanner,
+  userProfile,
+  leaderboardData,
+  calendar,
+  subjects,
+  dayKey,
+  onAddExam,
+  onRemoveExam,
+  notesData,
+  activeSubjectKey,
+  onAddNote,
+  onDeleteNote,
+  onUpdateNoteItem,
+  onTogglePin,
+  onToggleTag,
 }) {
+  const [hiddenWidgets, setHiddenWidgets] = useState([]);
+  const [maximizedWidget, setMaximizedWidget] = useState(null);
+  const [todayMode, setTodayMode] = useState(false);
+  const [showSecondary, setShowSecondary] = useState(false);
+
   const upcomingExams = [...examDates]
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .slice(0, 3);
   const recentNotes = [...notesItems].slice(0, 3);
+  const visibleWidgets = useMemo(
+    () => ["leaderboard", "calendar", "notes"].filter((id) => !hiddenWidgets.includes(id)),
+    [hiddenWidgets],
+  );
+
+  function hideWidget(id) {
+    setHiddenWidgets((current) => (current.includes(id) ? current : [...current, id]));
+    if (maximizedWidget === id) {
+      setMaximizedWidget(null);
+    }
+  }
+
+  function showAllWidgets() {
+    setHiddenWidgets([]);
+  }
+
+  function widgetHeader(title, meta, id) {
+    return (
+      <div className="dashboard-utility-head">
+        <h3>{title}</h3>
+        <div className="dashboard-widget-controls">
+          <span>{meta}</span>
+          <button type="button" className="ghost-button icon-btn" onClick={() => setMaximizedWidget(id)} title="Maximize">
+            ⛶
+          </button>
+          <button type="button" className="ghost-button icon-btn" onClick={() => hideWidget(id)} title="Close">
+            ✕
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -127,53 +182,73 @@ function DashboardView({
             onSetNewTemplateType={onSetNewTemplateType}
             onSetNewTemplateDifficulty={onSetNewTemplateDifficulty}
             onAddTemplate={onAddTemplate}
+            compactMode={todayMode}
+            showSecondary={showSecondary}
           />
 
           <section className="panel dashboard-utility-grid" data-tutorial="study-hub">
-            <article className="dashboard-utility-card" data-tutorial="leaderboard-card">
-              <div className="dashboard-utility-head">
-                <h3>Leaderboard Snapshot</h3>
-                <span>Top 5</span>
+            <div className="dashboard-utility-topbar">
+              <h3>Study Hub Widgets</h3>
+              <div className="dashboard-action-row dashboard-action-row--inline">
+                <button type="button" className={`ghost-button ${todayMode ? "is-active" : ""}`} onClick={() => setTodayMode((value) => !value)}>
+                  {todayMode ? "Exit Today Mode" : "Today Mode"}
+                </button>
+                <button type="button" className={`ghost-button ${showSecondary ? "is-active" : ""}`} onClick={() => setShowSecondary((value) => !value)}>
+                  {showSecondary ? "Hide Secondary" : "Show Secondary"}
+                </button>
+                <button type="button" className="ghost-button" onClick={showAllWidgets}>
+                  Restore Widgets
+                </button>
               </div>
-              <div className="dashboard-utility-list">
-                {leaderboardPreview.slice(0, 5).map((entry, index) => (
-                  <div key={`${entry.userId}-${index}`} className="dashboard-row">
-                    <span>#{index + 1} {entry.displayName}</span>
-                    <strong>{entry.score}</strong>
-                  </div>
-                ))}
-              </div>
-            </article>
+            </div>
 
-            <article className="dashboard-utility-card" data-tutorial="calendar-card">
-              <div className="dashboard-utility-head">
-                <h3>Upcoming Exams</h3>
-                <span>{upcomingExams.length}</span>
-              </div>
-              <div className="dashboard-utility-list">
-                {upcomingExams.length ? upcomingExams.map((exam, index) => (
-                  <div key={`${exam.date}-${exam.label}-${index}`} className="dashboard-row">
-                    <span>{exam.label}</span>
-                    <strong>{exam.date}</strong>
-                  </div>
-                )) : <p className="muted">No exam dates yet.</p>}
-              </div>
-            </article>
+            {visibleWidgets.includes("leaderboard") ? (
+              <article className="dashboard-utility-card dashboard-utility-card--large" data-tutorial="leaderboard-card">
+                {widgetHeader("Leaderboard Snapshot", "Top 5", "leaderboard")}
+                <div className="dashboard-utility-list">
+                  {leaderboardPreview.slice(0, 5).map((entry, index) => (
+                    <div key={`${entry.userId}-${index}`} className="dashboard-row">
+                      <span>#{index + 1} {entry.displayName}</span>
+                      <strong>{entry.score}</strong>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            ) : null}
 
-            <article className="dashboard-utility-card" data-tutorial="notes-card">
-              <div className="dashboard-utility-head">
-                <h3>Recent Notes</h3>
-                <span>{notesItems.length}</span>
-              </div>
-              <div className="dashboard-utility-list">
-                {recentNotes.length ? recentNotes.map((note) => (
-                  <div key={note.id} className="dashboard-row dashboard-row--stacked">
-                    <strong>{note.title}</strong>
-                    <span>{note.content?.slice(0, 72) || "No content"}</span>
-                  </div>
-                )) : <p className="muted">No notes captured yet.</p>}
-              </div>
-            </article>
+            {visibleWidgets.includes("calendar") ? (
+              <article className="dashboard-utility-card dashboard-utility-card--large" data-tutorial="calendar-card">
+                {widgetHeader("Upcoming Exams", String(upcomingExams.length), "calendar")}
+                <div className="dashboard-utility-list">
+                  {upcomingExams.length ? upcomingExams.map((exam, index) => (
+                    <div key={`${exam.date}-${exam.label}-${index}`} className="dashboard-row">
+                      <span>{exam.label}</span>
+                      <strong>{exam.date}</strong>
+                    </div>
+                  )) : <p className="muted">No exam dates yet.</p>}
+                </div>
+              </article>
+            ) : null}
+
+            {visibleWidgets.includes("notes") ? (
+              <article className="dashboard-utility-card dashboard-utility-card--large" data-tutorial="notes-card">
+                {widgetHeader("Recent Notes", String(notesItems.length), "notes")}
+                <div className="dashboard-utility-list">
+                  {recentNotes.length ? recentNotes.map((note) => (
+                    <div key={note.id} className="dashboard-row dashboard-row--stacked">
+                      <strong>{note.title}</strong>
+                      <span>{(note.body ?? note.content ?? "").slice(0, 112) || "No content"}</span>
+                    </div>
+                  )) : <p className="muted">No notes captured yet.</p>}
+                </div>
+              </article>
+            ) : null}
+
+            {!visibleWidgets.length ? (
+              <article className="dashboard-utility-card">
+                <p className="muted">All widgets are hidden. Use Restore Widgets to bring them back.</p>
+              </article>
+            ) : null}
           </section>
         </div>
 
@@ -201,7 +276,7 @@ function DashboardView({
 
           <section className="panel dashboard-quick-actions" data-tutorial="quick-actions">
             <h3>Study Flow</h3>
-            <p className="muted">Focus everything through these core actions.</p>
+            <p className="muted">Use these three primary actions for your daily cycle.</p>
             <div className="dashboard-action-row">
               <button type="button" className="ghost-button" onClick={onOpenPlanner}>To-Do Planner</button>
               <button type="button" className="ghost-button" onClick={onOpenFlashcards}>Travel Drill (Flashcards)</button>
@@ -238,9 +313,51 @@ function DashboardView({
             shopItems={shopItems}
             onBuyShopItem={onBuyShopItem}
             onApplyPrestige={onApplyPrestige}
+            compactMode={todayMode}
+            showSecondary={showSecondary}
           />
         </div>
       </div>
+
+      {maximizedWidget ? (
+        <div className="dashboard-modal-overlay" role="dialog" aria-modal="true">
+          <div className="dashboard-modal">
+            <div className="dashboard-modal__top">
+              <h3>
+                {maximizedWidget === "leaderboard" ? "Leaderboard" : maximizedWidget === "calendar" ? "Calendar" : "Notes"}
+              </h3>
+              <button type="button" className="ghost-button" onClick={() => setMaximizedWidget(null)}>
+                Close
+              </button>
+            </div>
+            <div className="dashboard-modal__content">
+              {maximizedWidget === "leaderboard" ? (
+                <LeaderboardPage userProfile={userProfile} allLeaderboardData={leaderboardData} />
+              ) : null}
+              {maximizedWidget === "calendar" ? (
+                <CalendarPage
+                  calendar={calendar}
+                  subjects={subjects}
+                  dayKey={dayKey}
+                  onAddExam={onAddExam}
+                  onRemoveExam={onRemoveExam}
+                />
+              ) : null}
+              {maximizedWidget === "notes" ? (
+                <NotesPage
+                  notesData={notesData}
+                  activeSubjectKey={activeSubjectKey}
+                  onAddNote={onAddNote}
+                  onDeleteNote={onDeleteNote}
+                  onUpdateNote={onUpdateNoteItem}
+                  onTogglePin={onTogglePin}
+                  onToggleTag={onToggleTag}
+                />
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

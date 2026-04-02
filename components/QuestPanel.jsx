@@ -36,23 +36,27 @@ function QuestPanel({
   onSetNewTemplateDifficulty,
   onAddTemplate,
   battle,
+  compactMode = false,
+  showSecondary = false,
 }) {
   return (
     <article className="panel quest-panel">
-      <div className="quest-gathering-scene">
-        <div className="quest-gathering-icons" aria-hidden>
-          <span>🌾</span>
-          <span>🪵</span>
-          <span>⛏️</span>
-          <span>🧺</span>
+      {!compactMode ? (
+        <div className="quest-gathering-scene">
+          <div className="quest-gathering-icons" aria-hidden>
+            <span>🌾</span>
+            <span>🪵</span>
+            <span>⛏️</span>
+            <span>🧺</span>
+          </div>
+          <p>Daily quests now represent gathering supplies and preparation missions.</p>
         </div>
-        <p>Daily quests now represent gathering supplies and preparation missions.</p>
-      </div>
+      ) : null}
 
       <div className="panel-heading">
         <div>
           <span className="eyebrow">Daily Quests</span>
-          <h2>Adventure board</h2>
+          <h2>{compactMode ? "Today board" : "Adventure board"}</h2>
         </div>
         <div className="quest-stats">
           <span>{activeSubject.quests.filter((quest) => quest.completed).length}/{activeSubject.quests.length}</span>
@@ -60,10 +64,12 @@ function QuestPanel({
         </div>
       </div>
 
-      <div className="daily-reset-banner">
-        <Sparkles size={16} />
-        <span>{event.detail}</span>
-      </div>
+      {!compactMode ? (
+        <div className="daily-reset-banner">
+          <Sparkles size={16} />
+          <span>{event.detail}</span>
+        </div>
+      ) : null}
 
       {rewardToast ? <div className="reward-toast">{rewardToast}</div> : null}
 
@@ -133,53 +139,57 @@ function QuestPanel({
         </button>
       </div>
 
-      <div className="revision-panel">
-        <div className="history-panel__header">
-          <span className="eyebrow">Revision Queue</span>
-          <span>{revisionQueue.length} due</span>
-        </div>
-        <div className="history-list">
-          {revisionQueue.slice(0, 4).map((card) => (
-            <button key={card.id} type="button" className="history-item revision-item" onClick={() => onResolveRevision(card.id)}>
-              <div>
-                <strong>{card.title}</strong>
-                <span>{card.dueDay}</span>
-              </div>
-              <span>{getReviewUrgency(dayKey, card.dueDay)}</span>
-            </button>
-          ))}
-          {!revisionQueue.length ? <p>No urgent review cards right now.</p> : null}
-        </div>
-      </div>
-
-      <div className="template-panel">
-        <div className="history-panel__header">
-          <span className="eyebrow">Quest Forge</span>
-          <span>{activeSubject.customTemplates.length} templates</span>
-        </div>
-        <form className="template-form" onSubmit={onAddTemplate}>
-          <input
-            type="text"
-            value={newTemplateTitle}
-            onChange={(event) => onSetNewTemplateTitle(event.target.value)}
-            placeholder="Create reusable quest template"
-          />
-          <div className="template-controls">
-            <select value={newTemplateType} onChange={(event) => onSetNewTemplateType(event.target.value)}>
-              <option value="review">Review</option>
-              <option value="practice">Practice</option>
-              <option value="explain">Explain</option>
-              <option value="boss">Boss</option>
-            </select>
-            <select value={newTemplateDifficulty} onChange={(event) => onSetNewTemplateDifficulty(event.target.value)}>
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="boss">Boss</option>
-            </select>
-            <button type="submit" className="ghost-button">Forge</button>
+      {showSecondary ? (
+        <>
+          <div className="revision-panel">
+            <div className="history-panel__header">
+              <span className="eyebrow">Revision Queue</span>
+              <span>{revisionQueue.length} due</span>
+            </div>
+            <div className="history-list">
+              {revisionQueue.slice(0, 4).map((card) => (
+                <button key={card.id} type="button" className="history-item revision-item" onClick={() => onResolveRevision(card.id)}>
+                  <div>
+                    <strong>{card.title}</strong>
+                    <span>{card.dueDay}</span>
+                  </div>
+                  <span>{getReviewUrgency(dayKey, card.dueDay)}</span>
+                </button>
+              ))}
+              {!revisionQueue.length ? <p>No urgent review cards right now.</p> : null}
+            </div>
           </div>
-        </form>
-      </div>
+
+          <div className="template-panel">
+            <div className="history-panel__header">
+              <span className="eyebrow">Quest Forge</span>
+              <span>{activeSubject.customTemplates.length} templates</span>
+            </div>
+            <form className="template-form" onSubmit={onAddTemplate}>
+              <input
+                type="text"
+                value={newTemplateTitle}
+                onChange={(event) => onSetNewTemplateTitle(event.target.value)}
+                placeholder="Create reusable quest template"
+              />
+              <div className="template-controls">
+                <select value={newTemplateType} onChange={(event) => onSetNewTemplateType(event.target.value)}>
+                  <option value="review">Review</option>
+                  <option value="practice">Practice</option>
+                  <option value="explain">Explain</option>
+                  <option value="boss">Boss</option>
+                </select>
+                <select value={newTemplateDifficulty} onChange={(event) => onSetNewTemplateDifficulty(event.target.value)}>
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="boss">Boss</option>
+                </select>
+                <button type="submit" className="ghost-button">Forge</button>
+              </div>
+            </form>
+          </div>
+        </>
+      ) : null}
     </article>
   );
 }

@@ -1410,7 +1410,7 @@ function App() {
     const combined = remoteLeaderboard.length
       ? [playerEntry, ...remoteLeaderboard.filter((entry) => entry.userId !== playerEntry.userId)]
       : [playerEntry, ...CPU_LEADERBOARD];
-    const leaderboardPreview = combined
+    const leaderboardPreview = [...combined]
       .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
       .slice(0, 5);
 
@@ -1488,6 +1488,20 @@ function App() {
         onOpenFlashcards={() => setActiveView("flashcards")}
         onOpenQuiz={() => setActiveView("quiz")}
         onOpenPlanner={() => setActiveView("planner")}
+        userProfile={accountProfile}
+        leaderboardData={combined}
+        calendar={state.calendar}
+        subjects={state.subjects}
+        dayKey={state.dayKey}
+        onAddExam={addExam}
+        onRemoveExam={removeExam}
+        notesData={state.notesData}
+        activeSubjectKey={state.activeSubject}
+        onAddNote={addNoteItem}
+        onDeleteNote={deleteNoteItem}
+        onUpdateNoteItem={updateNoteItem}
+        onTogglePin={togglePinNote}
+        onToggleTag={toggleTagNote}
       />
     );
   }

@@ -30,6 +30,8 @@ function CompanionPanel({
   shopItems,
   onBuyShopItem,
   onApplyPrestige,
+  compactMode = false,
+  showSecondary = false,
 }) {
   return (
     <article className="panel companion-panel">
@@ -54,7 +56,7 @@ function CompanionPanel({
         </div>
         <div className="pet-card__copy">
           <strong>{activeSubject.name} Familiar</strong>
-          <p>Reflects the active subject loadout and celebrates every quest you loot.</p>
+          {!compactMode ? <p>Reflects the active subject loadout and celebrates every quest you loot.</p> : null}
         </div>
       </div>
 
@@ -128,6 +130,7 @@ function CompanionPanel({
         </div>
       </div>
 
+      {showSecondary ? (
       <div className="shop-panel">
         <div className="badge-header">
           <span className="eyebrow">Guild Shop</span>
@@ -142,7 +145,9 @@ function CompanionPanel({
           ))}
         </div>
       </div>
+      ) : null}
 
+      {showSecondary ? (
       <div className="streak-card">
         <div>
           <span className="eyebrow">Prestige</span>
@@ -160,7 +165,9 @@ function CompanionPanel({
           </div>
         </div>
       </div>
+      ) : null}
 
+      {showSecondary ? (
       <div className="heatmap-card">
         <div className="heatmap-card__header">
           <span className="eyebrow">Streak Calendar</span>
@@ -172,6 +179,7 @@ function CompanionPanel({
           <span className="muted">Best {streak.longest}</span>
         </div>
       </div>
+      ) : null}
 
       <div className="journal-card">
         <div className="badge-header">
@@ -191,6 +199,7 @@ function CompanionPanel({
         Prestige Subject
       </button>
 
+      {!compactMode && showSecondary ? (
       <div className="companion-notes">
         <div>
           <BookOpen size={16} />
@@ -205,6 +214,7 @@ function CompanionPanel({
           <span>Semester goals track session progress toward your exam campaign.</span>
         </div>
       </div>
+      ) : null}
     </article>
   );
 }
