@@ -79,7 +79,6 @@ function DashboardView({
   notesItems,
   onOpenFlashcards,
   onOpenQuiz,
-  onOpenPlanner,
   userProfile,
   leaderboardData,
   calendar,
@@ -354,9 +353,8 @@ function DashboardView({
 
           <section className="panel dashboard-quick-actions" data-tutorial="quick-actions">
             <h3>Study Flow</h3>
-            <p className="muted">Use these three primary actions for your daily cycle.</p>
+            <p className="muted">Use these primary actions for your daily cycle.</p>
             <div className="dashboard-action-row">
-              <button type="button" className="ghost-button" onClick={onOpenPlanner}>To-Do Planner</button>
               <button type="button" className="ghost-button" onClick={onOpenFlashcards}>Travel Drill (Flashcards)</button>
               <button type="button" className="ghost-button" onClick={onOpenQuiz}>Boss Quiz Battle</button>
             </div>

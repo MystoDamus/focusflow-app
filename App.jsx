@@ -18,7 +18,6 @@ const CustomizationPage = lazy(() => import("./components/CustomizationPage"));
 const DashboardView = lazy(() => import("./components/DashboardView"));
 const FlashcardsPage = lazy(() => import("./components/FlashcardsPage"));
 const PartyViewer = lazy(() => import("./components/PartyViewer"));
-const PlannerPage = lazy(() => import("./components/PlannerPage"));
 const QuizBattlePage = lazy(() => import("./components/QuizBattlePage"));
 const ShopUI = lazy(() => import("./components/ShopUI"));
 const TutorialOverlay = lazy(() => import("./components/TutorialOverlay"));
@@ -1487,7 +1486,6 @@ function App() {
         notesItems={state.notesData?.items ?? []}
         onOpenFlashcards={() => setActiveView("flashcards")}
         onOpenQuiz={() => setActiveView("quiz")}
-        onOpenPlanner={() => setActiveView("planner")}
         userProfile={accountProfile}
         leaderboardData={combined}
         calendar={state.calendar}
@@ -1578,6 +1576,7 @@ function App() {
         onCreateCustomQuizSet={createCustomQuizSet}
         onAddCustomQuizQuestion={addCustomQuizQuestion}
         onSelectCustomQuizSet={selectCustomQuizSet}
+        partyRoster={state.partyRoster}
       />
     );
   }
@@ -1595,19 +1594,6 @@ function App() {
         petAuras={PET_AURAS}
         onUpdateAvatarField={updateAvatarField}
         onUpdatePetField={updatePetField}
-      />
-    );
-  }
-
-  function renderPlanner() {
-    return (
-      <PlannerPage
-        planner={state.planner}
-        plannerCompletion={plannerCompletion}
-        plannerDraft={plannerDraft}
-        onSetPlannerDraft={setPlannerDraft}
-        onAddPlannerMission={addPlannerMission}
-        onToggleMissionStatus={toggleMissionStatus}
       />
     );
   }
@@ -1649,10 +1635,6 @@ function App() {
 
     if (state.ui.activeView === "customize") {
       return renderCustomization();
-    }
-
-    if (state.ui.activeView === "planner") {
-      return renderPlanner();
     }
 
     if (state.ui.activeView === "analytics") {
@@ -1705,7 +1687,6 @@ function App() {
             ) : null}
             <div className="flashcard-actions">
               <button type="button" className="ghost-button" onClick={() => setActiveView("dashboard")}>Main Dashboard</button>
-              <button type="button" className="ghost-button" onClick={() => setActiveView("planner")}>Planner</button>
               <button type="button" className="ghost-button" onClick={() => setActiveView("flashcards")}>Flashcards</button>
               <button type="button" className="ghost-button" onClick={() => setActiveView("quiz")}>Quiz Battle</button>
               <button type="button" className="ghost-button" onClick={useAutomaticTheme}>Use Auto Theme</button>

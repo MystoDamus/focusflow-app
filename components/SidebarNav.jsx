@@ -9,13 +9,11 @@ import {
   Shield,
   Sparkles,
   Star,
-  Timer,
   User,
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "planner", label: "Study Planner", icon: Timer },
   { id: "flashcards", label: "Flashcards", icon: BookText },
   { id: "quiz", label: "Quiz Battle", icon: Brain },
   { id: "party", label: "Party", icon: Shield },

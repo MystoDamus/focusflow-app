@@ -18,6 +18,8 @@ function QuizBattlePage({
   onCreateCustomQuizSet,
   onAddCustomQuizQuestion,
   onSelectCustomQuizSet,
+  partyRoster,
+  bossData,
 }) {
   const [openAnswer, setOpenAnswer] = useState("");
   const [newSetTitle, setNewSetTitle] = useState("");
@@ -25,6 +27,7 @@ function QuizBattlePage({
   const [draftAnswer, setDraftAnswer] = useState("");
   const [draftChoices, setDraftChoices] = useState("");
   const [draftType, setDraftType] = useState("mcq");
+  const [lastAnswerState, setLastAnswerState] = useState(null); // Track for animations
   const qType = quizQuestion?.type ?? "mcq";
 
   function handleOpenSubmit(event) {
@@ -56,6 +59,216 @@ function QuizBattlePage({
     setDraftChoices("");
   }
 
+  // Render full-screen battle view when active
+  if (quizSession?.isActive && quizQuestion) {
+    return (
+      <div className="quiz-fullscreen-battle">
+        {/* Battle Arena */}
+        <div className="battle-arena">
+          {/* Boss Side */}
+          <div className="battle-side battle-side--boss">
+            <div className="boss-arena">
+              <div 
+                className={`boss-sprite-battle ${quizSession.bossHp <= 0 ? "boss-dead" : ""}`}
+                style={{ fontSize: "4rem" }}
+              >
+                👹
+              </div>
+              <div className="boss-info">
+                <h4>Boss</h4>
+                <div className="arena-hp-bar">
+                  <div
+                    className={`arena-hp-fill ${
+                      (quizSession.bossHp / quizSession.maxBossHp) > 0.5
+                        ? "arena-hp-healthy"
+                        : (quizSession.bossHp / quizSession.maxBossHp) > 0.2
+                          ? "arena-hp-wounded"
+                          : "arena-hp-critical"
+                    }`}
+                    style={{
+                      width: `${(quizSession.bossHp / quizSession.maxBossHp) * 100}%`,
+                    }}
+                  />
+                </div>
+                <p className="arena-hp-text">
+                  {quizSession.bossHp}/{quizSession.maxBossHp}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* VS Indicator */}
+          <div className="battle-vs-container">
+            <div className="battle-vs-text">VS</div>
+          </div>
+
+          {/* Party Side */}
+          <div className="battle-side battle-side--party">
+            <div className="party-arena">
+              <div className="party-roster-battle">
+                {(partyRoster ?? []).slice(0, 3).map((member, index) => (
+                  <div key={`${member.id}-${index}`} className="party-member-battle">
+                    <div className="member-sprite-battle">
+                      {member.emoji ?? "⚔️"}
+                    </div>
+                    <p className="member-name-battle">{member.displayName?.slice(0, 8) ?? "Member"}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="party-health-battle">
+                <h4>Party HP</h4>
+                <div className="arena-hp-bar">
+                  <div
+                    className="arena-hp-fill arena-hp-healthy"
+                    style={{
+                      width: `${(quizSession.partyHp / quizSession.maxPartyHp) * 100}%`,
+                    }}
+                  />
+                </div>
+                <p className="arena-hp-text">
+                  {quizSession.partyHp}/{quizSession.maxPartyHp}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Question Area */}
+        <div className="battle-question-container">
+          <div className="battle-question-header">
+            <span className="battle-progress">
+              Q{quizSession.index + 1}/{quizSession.questions.length}
+            </span>
+            <span className={`battle-type-badge battle-type-badge--${qType}`}>
+              {qType === "identification"
+                ? "Identification"
+                : qType === "true-false"
+                  ? "True / False"
+                  : "Multiple Choice"}
+            </span>
+            <span className="battle-timer">⏱️ {quizSession.timeLeft}s</span>
+          </div>
+
+          <h2 className="battle-question-text">{quizQuestion.question}</h2>
+
+          <div className="battle-options-container">
+            {qType === "true-false" && (
+              <div className="tf-buttons-battle">
+                <button
+                  type="button"
+                  className="tf-btn-battle tf-btn--true"
+                  onClick={() => onAnswerQuiz("True")}
+                >
+                  True
+                </button>
+                <button
+                  type="button"
+                  className="tf-btn-battle tf-btn--false"
+                  onClick={() => onAnswerQuiz("False")}
+                >
+                  False
+                </button>
+              </div>
+            )}
+
+            {qType === "identification" && (
+              <form className="open-answer-form-battle" onSubmit={handleOpenSubmit}>
+                <input
+                  className="open-answer-input-battle"
+                  value={openAnswer}
+                  onChange={(e) => setOpenAnswer(e.target.value)}
+                  placeholder="Type your answer and press Enter"
+                  autoFocus
+                />
+                <button type="submit" className="accent-button">
+                  Submit
+                </button>
+              </form>
+            )}
+
+            {(qType === "mcq" || !qType) && (
+              <div className="choice-grid-battle">
+                {quizQuestion.choices.map((choice, index) => (
+                  <button
+                    key={choice}
+                    type="button"
+                    className="choice-btn-battle"
+                    onClick={() => onAnswerQuiz(choice)}
+                    disabled={quizSession.hiddenChoices.includes(choice)}
+                  >
+                    {quizSession.hiddenChoices.includes(choice) ? "-" : choice}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Powerups and Stats */}
+          <div className="battle-bottom-bar">
+            <div className="battle-powerups">
+              <button
+                type="button"
+                className="powerup-btn"
+                disabled={!quizSession.fiftyFifty || qType !== "mcq"}
+                onClick={onUseFiftyFifty}
+                title="50-50"
+              >
+                50-50
+              </button>
+              <button
+                type="button"
+                className="powerup-btn"
+                disabled={!quizSession.extraTime}
+                onClick={onUseExtraTime}
+                title="Extra Time"
+              >
+                +10s
+              </button>
+              <button
+                type="button"
+                className="powerup-btn"
+                onClick={onUseDefend}
+                title="Defend"
+              >
+                🛡️
+              </button>
+              <button
+                type="button"
+                className="powerup-btn"
+                disabled={!quizSession.hasHealer}
+                onClick={onUseHeal}
+                title="Heal"
+              >
+                ❤️
+              </button>
+              <button
+                type="button"
+                className="powerup-btn"
+                disabled={quizSession.potions <= 0}
+                onClick={onUsePotion}
+                title="Potion"
+              >
+                🧪 {quizSession.potions}
+              </button>
+            </div>
+
+            <div className="battle-stats">
+              <div className="stat-item">
+                <span>Score</span>
+                <strong>{quizSession.score}</strong>
+              </div>
+              <div className="stat-item">
+                <span>Streak</span>
+                <strong>{quizSession.streak}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Default page view
   return (
     <section className="feature-page">
       <div className="feature-header">
@@ -128,119 +341,26 @@ function QuizBattlePage({
                 placeholder="Other choices separated by |"
               />
             ) : null}
-            <button type="submit" className="ghost-button" disabled={!activeCustomSet}>Add Question</button>
+            <button type="submit" className="ghost-button" disabled={!activeCustomSet}>
+              Add Question
+            </button>
           </form>
-          <p className="muted">Custom quizzes are separate from flashcards, but you can still launch a quiz using flashcards.</p>
+          <p className="muted">
+            Custom quizzes are separate from flashcards, but you can still launch a quiz using flashcards.
+          </p>
         </article>
 
         <article className="panel">
-          {quizSession?.isActive && quizQuestion ? (
-            <div className="quiz-card">
-              <div className="quiz-top">
-                <span>Question {quizSession.index + 1}/{quizSession.questions.length}</span>
-                <span className={`quiz-type-badge quiz-type-badge--${qType}`}>
-                  {qType === "identification" ? "Identification" : qType === "true-false" ? "True / False" : "Multiple Choice"}
-                </span>
-                <strong className="quiz-timer">{quizSession.timeLeft}s</strong>
-              </div>
-
-              <div className="quiz-battle-bars">
-                <div>
-                  <span>{quizSession.battleMode === "versus" ? "Enemy Party HP" : "Boss HP"}</span>
-                  <div className="qba-hp-track">
-                    <div
-                      className="qba-hp-fill qba-hp-critical"
-                      style={{
-                        width: `${(
-                          (quizSession.battleMode === "versus" ? quizSession.enemyPartyHp : quizSession.bossHp) /
-                          (quizSession.battleMode === "versus" ? quizSession.maxEnemyPartyHp : quizSession.maxBossHp)
-                        ) * 100}%`,
-                      }}
-                    />
-                  </div>
-                  <strong>
-                    {quizSession.battleMode === "versus" ? quizSession.enemyPartyHp : quizSession.bossHp}/
-                    {quizSession.battleMode === "versus" ? quizSession.maxEnemyPartyHp : quizSession.maxBossHp}
-                  </strong>
-                </div>
-                <div>
-                  <span>Party HP</span>
-                  <div className="qba-hp-track">
-                    <div className="qba-hp-fill qba-hp-healthy" style={{ width: `${(quizSession.partyHp / quizSession.maxPartyHp) * 100}%` }} />
-                  </div>
-                  <strong>{quizSession.partyHp}/{quizSession.maxPartyHp}</strong>
-                </div>
-              </div>
-
-              <h3 className="quiz-question">{quizQuestion.question}</h3>
-
-              {qType === "true-false" && (
-                <div className="tf-buttons">
-                  <button type="button" className="tf-btn tf-btn--true" onClick={() => onAnswerQuiz("True")}>
-                    True
-                  </button>
-                  <button type="button" className="tf-btn tf-btn--false" onClick={() => onAnswerQuiz("False")}>
-                    False
-                  </button>
-                </div>
-              )}
-
-              {qType === "identification" && (
-                <form className="open-answer-form" onSubmit={handleOpenSubmit}>
-                  <input
-                    className="open-answer-input"
-                    value={openAnswer}
-                    onChange={(e) => setOpenAnswer(e.target.value)}
-                    placeholder="Type your answer and press Enter"
-                    autoFocus
-                  />
-                  <button type="submit" className="accent-button">Submit</button>
-                </form>
-              )}
-
-              {(qType === "mcq" || !qType) && (
-                <div className="choice-grid">
-                  {quizQuestion.choices.map((choice) => (
-                    <button
-                      key={choice}
-                      type="button"
-                      className="ghost-button"
-                      onClick={() => onAnswerQuiz(choice)}
-                      disabled={quizSession.hiddenChoices.includes(choice)}
-                    >
-                      {quizSession.hiddenChoices.includes(choice) ? "-" : choice}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <div className="powerup-row">
-                <button type="button" className="ghost-button" disabled={!quizSession.fiftyFifty || qType !== "mcq"} onClick={onUseFiftyFifty}>50-50</button>
-                <button type="button" className="ghost-button" disabled={!quizSession.extraTime} onClick={onUseExtraTime}>+10s</button>
-                <button type="button" className="ghost-button" onClick={onUseDefend}>Defend</button>
-                <button type="button" className="ghost-button" onClick={onUseHeal} disabled={!quizSession.hasHealer}>Heal</button>
-                <button type="button" className="ghost-button" onClick={onUsePotion} disabled={quizSession.potions <= 0}>Potion ({quizSession.potions})</button>
-              </div>
-
-              <div className="stat-grid">
-                <div><span>Score</span><strong>{quizSession.score}</strong></div>
-                <div><span>Streak</span><strong>{quizSession.streak}</strong></div>
-              </div>
-            </div>
-          ) : (
-            <div className="quiz-card">
-              <h3>{quizSession?.result === "victory" ? "Victory" : quizSession?.result === "defeat" ? "Defeat" : "Arena Idle"}</h3>
-              <p>
-                Solo battles now include boss health and party health. Correct answers damage the boss.
-                Wrong answers damage your party. Use Defend, Heal, and Potions to survive. You can also launch Party Versus battles.
-              </p>
-              <div className="stat-grid">
-                <div><span>Best Score</span><strong>{quizState.bestScore}</strong></div>
-                <div><span>Accuracy</span><strong>{accuracy}%</strong></div>
-                <div><span>Total Answered</span><strong>{quizState.totalAnswered}</strong></div>
-              </div>
-            </div>
-          )}
+          <h3>{quizSession?.result === "victory" ? "Victory" : quizSession?.result === "defeat" ? "Defeat" : "Arena Idle"}</h3>
+          <p>
+            Solo battles now include boss health and party health. Correct answers damage the boss.
+            Wrong answers damage your party. Use Defend, Heal, and Potions to survive. You can also launch Party Versus battles.
+          </p>
+          <div className="stat-grid">
+            <div><span>Best Score</span><strong>{quizState.bestScore}</strong></div>
+            <div><span>Accuracy</span><strong>{accuracy}%</strong></div>
+            <div><span>Total Answered</span><strong>{quizState.totalAnswered}</strong></div>
+          </div>
         </article>
       </div>
     </section>
