@@ -110,6 +110,15 @@ function DashboardView({
   const [resizeStartPos, setResizeStartPos] = useState({ x: 0, y: 0 });
   const modalRef = useRef(null);
 
+  // Center modal when it opens
+  useEffect(() => {
+    if (maximizedWidget) {
+      const centerX = (window.innerWidth - modalSize.width) / 2;
+      const centerY = (window.innerHeight - modalSize.height) / 2;
+      setModalPosition({ x: Math.max(0, centerX), y: Math.max(0, centerY) });
+    }
+  }, [maximizedWidget]);
+
   const upcomingExams = [...examDates]
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .slice(0, 3);
@@ -410,9 +419,6 @@ function DashboardView({
               <h3>
                 {maximizedWidget === "leaderboard" ? "Leaderboard" : maximizedWidget === "calendar" ? "Calendar" : "Notes"}
               </h3>
-              <button type="button" className="ghost-button" onClick={() => setMaximizedWidget(null)}>
-                Close
-              </button>
             </div>
             <div className="dashboard-modal__content">
               {maximizedWidget === "leaderboard" ? (
