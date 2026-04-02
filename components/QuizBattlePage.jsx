@@ -19,7 +19,6 @@ function QuizBattlePage({
   onAddCustomQuizQuestion,
   onSelectCustomQuizSet,
   partyRoster,
-  bossData,
 }) {
   const [openAnswer, setOpenAnswer] = useState("");
   const [newSetTitle, setNewSetTitle] = useState("");
@@ -27,7 +26,6 @@ function QuizBattlePage({
   const [draftAnswer, setDraftAnswer] = useState("");
   const [draftChoices, setDraftChoices] = useState("");
   const [draftType, setDraftType] = useState("mcq");
-  const [lastAnswerState, setLastAnswerState] = useState(null); // Track for animations
   const qType = quizQuestion?.type ?? "mcq";
 
   function handleOpenSubmit(event) {
@@ -63,6 +61,13 @@ function QuizBattlePage({
   if (quizSession?.isActive && quizQuestion) {
     return (
       <div className="quiz-fullscreen-battle">
+        <div className="battle-fx-layer" aria-hidden>
+          <span className="battle-fx-orb battle-fx-orb--one" />
+          <span className="battle-fx-orb battle-fx-orb--two" />
+          <span className="battle-fx-orb battle-fx-orb--three" />
+          <span className="battle-fx-streak battle-fx-streak--one" />
+          <span className="battle-fx-streak battle-fx-streak--two" />
+        </div>
         {/* Battle Arena */}
         <div className="battle-arena">
           {/* Boss Side */}

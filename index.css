@@ -3192,26 +3192,54 @@ button {
 }
 
 .quest-gathering-scene {
+  position: relative;
+  overflow: hidden;
   margin-bottom: 14px;
-  padding: 12px;
-  border-radius: 12px;
+  padding: 14px;
+  border-radius: 16px;
   border: 1px solid rgba(16, 185, 129, 0.28);
-  background: linear-gradient(180deg, rgba(16, 185, 129, 0.16), rgba(6, 78, 59, 0.45));
+  background:
+    radial-gradient(circle at 14% 20%, rgba(134, 239, 172, 0.24), transparent 42%),
+    radial-gradient(circle at 88% 88%, rgba(16, 185, 129, 0.18), transparent 46%),
+    linear-gradient(180deg, rgba(16, 185, 129, 0.2), rgba(6, 78, 59, 0.5));
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.24), inset 0 0 20px rgba(111, 255, 195, 0.08);
 }
 
 .quest-gathering-scene p {
-  margin: 8px 0 0;
+  position: relative;
+  z-index: 2;
+  margin: 10px 0 0;
   color: #c9ffe8;
   font-size: 0.9rem;
 }
 
+.quest-gathering-glow {
+  position: absolute;
+  inset: -40% -10% auto;
+  height: 120px;
+  background: radial-gradient(circle, rgba(134, 239, 172, 0.2), transparent 65%);
+  filter: blur(10px);
+  animation: gather-shimmer 5s ease-in-out infinite;
+  pointer-events: none;
+}
+
 .quest-gathering-icons {
+  position: relative;
+  z-index: 2;
   display: flex;
-  gap: 10px;
-  font-size: 1.2rem;
+  gap: 12px;
+  font-size: 1.24rem;
 }
 
 .quest-gathering-icons span {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(5, 30, 22, 0.4);
+  border: 1px solid rgba(160, 255, 205, 0.25);
+  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.08);
   animation: gather-bob 1.8s ease-in-out infinite;
 }
 
@@ -3227,13 +3255,75 @@ button {
   animation-delay: 0.6s;
 }
 
+.quest-gathering-orbs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.quest-gathering-orbs span {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(167, 243, 208, 0.72);
+  box-shadow: 0 0 12px rgba(167, 243, 208, 0.8);
+  animation: gather-orb 6s linear infinite;
+}
+
+.quest-gathering-orbs span:nth-child(1) {
+  left: 16%;
+  bottom: -10px;
+}
+
+.quest-gathering-orbs span:nth-child(2) {
+  left: 52%;
+  bottom: -14px;
+  animation-delay: 1.8s;
+}
+
+.quest-gathering-orbs span:nth-child(3) {
+  left: 78%;
+  bottom: -10px;
+  animation-delay: 3.2s;
+}
+
 @keyframes gather-bob {
   0%,
   100% {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-4px);
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes gather-orb {
+  0% {
+    transform: translateY(0) scale(0.65);
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-82px) scale(1.15);
+    opacity: 0;
+  }
+}
+
+@keyframes gather-shimmer {
+  0%,
+  100% {
+    transform: translateX(-10%);
+    opacity: 0.42;
+  }
+  50% {
+    transform: translateX(10%);
+    opacity: 0.8;
   }
 }
 
@@ -3263,13 +3353,77 @@ button {
 .quiz-fullscreen-battle {
   position: fixed;
   inset: 0;
-  background: linear-gradient(180deg, rgba(15, 8, 25, 0.98), rgba(8, 4, 16, 0.98));
+  background:
+    radial-gradient(circle at 18% 22%, rgba(255, 119, 85, 0.15), transparent 40%),
+    radial-gradient(circle at 80% 74%, rgba(86, 215, 127, 0.1), transparent 42%),
+    linear-gradient(180deg, rgba(15, 8, 25, 0.98), rgba(8, 4, 16, 0.98));
   display: grid;
   grid-template-rows: 1fr auto;
   gap: 0;
   z-index: 9000;
   overflow: hidden;
   padding: 0;
+}
+
+.battle-fx-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.battle-fx-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(4px);
+  animation: arena-orb-float 10s ease-in-out infinite;
+}
+
+.battle-fx-orb--one {
+  width: 180px;
+  height: 180px;
+  left: -34px;
+  top: 10%;
+  background: rgba(255, 126, 95, 0.12);
+}
+
+.battle-fx-orb--two {
+  width: 220px;
+  height: 220px;
+  right: -52px;
+  top: 24%;
+  background: rgba(86, 215, 127, 0.12);
+  animation-delay: 1.8s;
+}
+
+.battle-fx-orb--three {
+  width: 140px;
+  height: 140px;
+  left: 46%;
+  bottom: -48px;
+  background: rgba(158, 123, 255, 0.14);
+  animation-delay: 3.6s;
+}
+
+.battle-fx-streak {
+  position: absolute;
+  width: 220px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 211, 108, 0.52), transparent);
+  transform: rotate(-24deg);
+  opacity: 0;
+  animation: arena-streak 4.6s linear infinite;
+}
+
+.battle-fx-streak--one {
+  left: 12%;
+  top: 22%;
+}
+
+.battle-fx-streak--two {
+  right: 16%;
+  top: 40%;
+  animation-delay: 2.2s;
 }
 
 .battle-arena {
@@ -3310,6 +3464,7 @@ button {
 }
 
 .boss-sprite-battle {
+  position: relative;
   width: 120px;
   height: 120px;
   border-radius: 20px;
@@ -3319,6 +3474,15 @@ button {
   border: 2px solid rgba(255, 126, 95, 0.6);
   box-shadow: 0 8px 24px rgba(255, 126, 95, 0.25), inset 0 0 20px rgba(255, 255, 255, 0.08);
   animation: boss-idle 3s ease-in-out infinite;
+}
+
+.boss-sprite-battle::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 126, 95, 0.22);
+  animation: boss-aura 2.2s ease-in-out infinite;
 }
 
 .boss-sprite-battle.boss-dead {
@@ -3359,6 +3523,7 @@ button {
 }
 
 .member-sprite-battle {
+  position: relative;
   width: 80px;
   height: 80px;
   border-radius: 14px;
@@ -3369,6 +3534,15 @@ button {
   border: 1px solid rgba(86, 215, 127, 0.4);
   box-shadow: inset 0 0 16px rgba(255, 255, 255, 0.06);
   animation: fighter-idle 2.5s ease-in-out infinite;
+}
+
+.member-sprite-battle::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 18px;
+  border: 1px solid rgba(132, 244, 184, 0.25);
+  animation: ally-aura 3.1s ease-in-out infinite;
 }
 
 .member-name-battle {
@@ -3439,11 +3613,12 @@ button {
 
 .battle-vs-text {
   font-family: "Cinzel", serif;
-  font-size: 1.5rem;
+  font-size: 1.7rem;
   font-weight: 700;
   color: var(--accent);
   text-shadow: 0 0 20px rgba(255, 211, 108, 0.4);
   letter-spacing: 0.1em;
+  animation: vs-pulse 1.6s ease-in-out infinite;
 }
 
 /* ── Battle Question Container ────────────────────────── */
@@ -3587,6 +3762,7 @@ button {
   border-color: rgba(255, 211, 108, 0.7);
   background: linear-gradient(135deg, rgba(255, 211, 108, 0.25), rgba(255, 211, 108, 0.15));
   box-shadow: 0 0 16px rgba(255, 211, 108, 0.2);
+  transform: translateY(-2px);
 }
 
 .choice-btn-battle:disabled {
@@ -3685,6 +3861,67 @@ button {
   }
   50% {
     text-shadow: 0 0 16px rgba(255, 142, 118, 0.6);
+  }
+}
+
+@keyframes arena-orb-float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-18px) scale(1.07);
+  }
+}
+
+@keyframes arena-streak {
+  0% {
+    transform: translateX(-120px) rotate(-24deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.9;
+  }
+  60% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateX(280px) rotate(-24deg);
+    opacity: 0;
+  }
+}
+
+@keyframes boss-aura {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes ally-aura {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes vs-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
   }
 }
 

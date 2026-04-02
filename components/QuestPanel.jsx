@@ -43,11 +43,17 @@ function QuestPanel({
     <article className="panel quest-panel">
       {!compactMode ? (
         <div className="quest-gathering-scene">
+          <div className="quest-gathering-glow" aria-hidden />
           <div className="quest-gathering-icons" aria-hidden>
             <span>🌾</span>
             <span>🪵</span>
             <span>⛏️</span>
             <span>🧺</span>
+          </div>
+          <div className="quest-gathering-orbs" aria-hidden>
+            <span />
+            <span />
+            <span />
           </div>
           <p>Daily quests now represent gathering supplies and preparation missions.</p>
         </div>
