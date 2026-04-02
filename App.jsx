@@ -1670,34 +1670,19 @@ function App() {
         onSetActiveView={setActiveView}
         collapsed={Boolean(state.ui.sidebarCollapsed)}
         onToggleCollapse={toggleSidebar}
+        currentTheme={currentTheme}
+        onPickTheme={handleProfileThemePick}
+        onAutoTheme={useAutomaticTheme}
+        onLogout={logout}
+        syncStatus={syncStatus}
+        backendEnabled={backendEnabled}
+        onRetrySync={retrySync}
       />
 
       <main
         className={`dashboard-shell feature-shell theme-${currentTheme} ${state.settings.highContrast ? "a11y-high-contrast" : ""} ${state.settings.largeText ? "a11y-large-text" : ""} ${state.settings.reducedMotion ? "a11y-reduced-motion" : ""}`}
         style={{ "--anim-scale": state.settings.reducedMotion ? 0.2 : 1, ...themeVars }}
       ><Confetti active={showConfetti} />
-        <section className="panel dashboard-toolbar" style={{ marginBottom: 12 }} data-tutorial="toolbar">
-          <div className="feature-header" style={{ marginBottom: 10 }}>
-            <h2>Workspace Controls</h2>
-            <div className="pill-inline" style={{ marginLeft: "auto" }}>
-              {backendEnabled ? `Cloud Sync: ${syncStatus}` : "Cloud Sync: local-only"}
-            </div>
-            {backendEnabled && syncStatus === "degraded" ? (
-              <button type="button" className="ghost-button" onClick={retrySync}>Retry Sync</button>
-            ) : null}
-            <div className="flashcard-actions">
-              <button type="button" className="ghost-button" onClick={() => setActiveView("dashboard")}>Main Dashboard</button>
-              <button type="button" className="ghost-button" onClick={() => setActiveView("flashcards")}>Flashcards</button>
-              <button type="button" className="ghost-button" onClick={() => setActiveView("quiz")}>Quiz Battle</button>
-              <button type="button" className="ghost-button" onClick={useAutomaticTheme}>Use Auto Theme</button>
-              <button type="button" className="ghost-button" onClick={() => handleProfileThemePick("default")}>Classic Theme</button>
-              <button type="button" className="ghost-button" onClick={() => handleProfileThemePick("neon")}>Neon Theme</button>
-              <button type="button" className="ghost-button" onClick={() => handleProfileThemePick("forest")}>Forest Theme</button>
-              <button type="button" className="ghost-button" onClick={logout}>Logout</button>
-            </div>
-          </div>
-        </section>
-        
         {rewardToast ? <div className="global-toast">{rewardToast}</div> : null}
         {!isOnline ? <div className="global-toast">You are offline. Changes will sync when connection returns.</div> : null}
         {queuedOffline ? <div className="global-toast">Cloud save queued. It will upload automatically once online.</div> : null}

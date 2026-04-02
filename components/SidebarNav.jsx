@@ -4,7 +4,12 @@ import {
   Brain,
   ChevronLeft,
   ChevronRight,
+  Cloud,
+  CloudOff,
   LayoutDashboard,
+  LogOut,
+  Palette,
+  RefreshCw,
   ShoppingBag,
   Shield,
   Sparkles,
@@ -23,12 +28,34 @@ const NAV_ITEMS = [
   { id: "analytics", label: "Analytics", icon: BarChart3 },
 ];
 
-function SidebarNav({ activeView, seasonTitle, onSetActiveView, collapsed, onToggleCollapse }) {
+const THEMES = [
+  { id: "default", label: "Classic", color: "#ffd36c" },
+  { id: "neon", label: "Neon", color: "#7ce0ff" },
+  { id: "forest", label: "Forest", color: "#56d77f" },
+];
+
+function SidebarNav({
+  activeView,
+  seasonTitle,
+  onSetActiveView,
+  collapsed,
+  onToggleCollapse,
+  currentTheme,
+  onPickTheme,
+  onAutoTheme,
+  onLogout,
+  syncStatus,
+  backendEnabled,
+  onRetrySync,
+}) {
+  const syncOk = !backendEnabled || syncStatus === "synced" || syncStatus === "idle";
+
   return (
     <aside className={`sidebar-nav ${collapsed ? "is-collapsed" : ""}`}>
+      {/* Brand */}
       <div className="sidebar-brand">
-        <Shield size={18} />
-        <strong>{collapsed ? "FF" : "FocusFlow Guild"}</strong>
+        <Shield size={18} className="sidebar-brand-icon" />
+        {!collapsed && <strong>FocusFlow</strong>}
         <button
           type="button"
           className="sidebar-collapse"
@@ -39,11 +66,12 @@ function SidebarNav({ activeView, seasonTitle, onSetActiveView, collapsed, onTog
           {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
       </div>
-      <div className="sidebar-menu">
+
+      {/* Nav links */}
+      <nav className="sidebar-menu">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = activeView === item.id;
-
           return (
             <button
               key={item.id}
@@ -51,17 +79,92 @@ function SidebarNav({ activeView, seasonTitle, onSetActiveView, collapsed, onTog
               className={`sidebar-link ${active ? "is-active" : ""}`}
               onClick={() => onSetActiveView(item.id)}
               data-tutorial={`nav-${item.id}`}
+              title={collapsed ? item.label : undefined}
             >
               <Icon size={16} />
-              <span>{collapsed ? "" : item.label}</span>
+              {!collapsed && <span>{item.label}</span>}
             </button>
           );
         })}
-      </div>
-      <div className="sidebar-footer" style={{ display: collapsed ? "none" : "inline-flex" }}>
-        <Sparkles size={14} />
-        <span>{seasonTitle}</span>
-      </div>
+      </nav>
+
+      {/* Divider */}
+      <div className="sidebar-divider" />
+
+      {/* Theme picker */}
+      {!collapsed ? (
+        <div className="sidebar-section">
+          <p className="sidebar-section-label">
+            <Palette size={12} />
+            Theme
+          </p>
+          <div className="sidebar-theme-row">
+            {THEMES.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                className={`sidebar-theme-swatch ${currentTheme === t.id ? "is-active" : ""}`}
+                style={{ "--swatch-color": t.color }}
+                onClick={() => onPickTheme(t.id)}
+                title={t.label}
+              />
+            ))}
+            <button
+              type="button"
+              className={`sidebar-theme-swatch sidebar-theme-swatch--auto ${currentTheme === "auto" ? "is-active" : ""}`}
+              onClick={onAutoTheme}
+              title="Auto"
+            >
+              <Sparkles size={10} />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="sidebar-link sidebar-link--icon-only"
+          title="Theme"
+          onClick={() => onPickTheme(currentTheme === "default" ? "neon" : currentTheme === "neon" ? "forest" : "default")}
+        >
+          <Palette size={16} />
+        </button>
+      )}
+
+      {/* Sync status */}
+      {backendEnabled && (
+        <div className={`sidebar-sync ${syncOk ? "sidebar-sync--ok" : "sidebar-sync--warn"}`} title={`Sync: ${syncStatus}`}>
+          {syncOk ? <Cloud size={13} /> : <CloudOff size={13} />}
+          {!collapsed && (
+            <>
+              <span>{syncStatus}</span>
+              {syncStatus === "degraded" && (
+                <button type="button" className="sidebar-sync-retry" onClick={onRetrySync} title="Retry sync">
+                  <RefreshCw size={11} />
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Logout */}
+      <button
+        type="button"
+        className="sidebar-logout"
+        onClick={onLogout}
+        title="Logout"
+      >
+        <LogOut size={15} />
+        {!collapsed && <span>Logout</span>}
+      </button>
+
+      {/* Season footer */}
+      {!collapsed && (
+        <div className="sidebar-footer">
+          <Sparkles size={12} />
+          <span>{seasonTitle}</span>
+        </div>
+      )}
     </aside>
   );
 }
