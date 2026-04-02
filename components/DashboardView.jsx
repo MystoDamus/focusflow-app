@@ -213,9 +213,6 @@ function DashboardView({
           <button type="button" className="ghost-button icon-btn" onClick={() => setMaximizedWidget(id)} title="Maximize">
             ⛶
           </button>
-          <button type="button" className="ghost-button icon-btn" onClick={() => hideWidget(id)} title="Close">
-            ✕
-          </button>
         </div>
       </div>
     );
@@ -279,9 +276,6 @@ function DashboardView({
                 </button>
                 <button type="button" className={`ghost-button ${showSecondary ? "is-active" : ""}`} onClick={() => setShowSecondary((value) => !value)}>
                   {showSecondary ? "Hide Secondary" : "Show Secondary"}
-                </button>
-                <button type="button" className="ghost-button" onClick={showAllWidgets}>
-                  Restore Widgets
                 </button>
               </div>
             </div>
@@ -419,6 +413,9 @@ function DashboardView({
               <h3>
                 {maximizedWidget === "leaderboard" ? "Leaderboard" : maximizedWidget === "calendar" ? "Calendar" : "Notes"}
               </h3>
+              <button type="button" className="ghost-button" onClick={() => setMaximizedWidget(null)}>
+                Close
+              </button>
             </div>
             <div className="dashboard-modal__content">
               {maximizedWidget === "leaderboard" ? (
