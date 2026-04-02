@@ -158,24 +158,8 @@ async function createBackendAccount(email, password, displayName) {
     displayName,
   });
 
-  const { error: profileError } = await backendUpsertProfile({
-    id: authUser.id,
-    email: authUser.email ?? email,
-    display_name: displayName,
-    currency: profile.currency,
-    shards: profile.shards,
-    current_theme: profile.currentTheme,
-    tutorial_completed: profile.tutorialCompleted,
-    tutorial_skipped: profile.tutorialSkipped,
-    leaderboard_stats: profile.leaderboardStats,
-    stats: profile.stats,
-    owned_items: profile.ownedItems,
-    updated_at: new Date().toISOString(),
-  });
-
-  if (profileError) {
-    return { success: false, error: profileError.message || "Profile creation failed." };
-  }
+  // Profile is created automatically by DB trigger on auth.users insert.
+  // No client-side insert needed here (would fail RLS before email verification).
 
   const user = pendingVerification
     ? null
