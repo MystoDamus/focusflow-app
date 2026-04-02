@@ -1098,6 +1098,8 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
 }
 
 .sidebar-menu {
@@ -1110,11 +1112,12 @@ button {
   background: rgba(255, 255, 255, 0.04);
   color: var(--text);
   border-radius: 12px;
-  padding: 10px 12px;
+  padding: 11px 12px;
   display: flex;
   gap: 8px;
   align-items: center;
   text-align: left;
+  min-height: 44px;
 }
 
 .sidebar-link span:empty {
@@ -1305,6 +1308,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .feature-header h2,
@@ -1538,10 +1542,25 @@ button {
 
   .sidebar-nav {
     position: static;
+    top: auto;
   }
 
   .sidebar-menu {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .app-shell.sidebar-collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .app-shell.sidebar-collapsed .sidebar-nav.is-collapsed {
+    padding: 10px 12px;
+    gap: 0;
+  }
+
+  .app-shell.sidebar-collapsed .sidebar-nav.is-collapsed .sidebar-menu,
+  .app-shell.sidebar-collapsed .sidebar-nav.is-collapsed .sidebar-footer {
+    display: none;
   }
 
   .feature-grid,
@@ -1551,8 +1570,22 @@ button {
 }
 
 @media (max-width: 760px) {
+  .app-shell {
+    width: min(100%, calc(100% - 12px));
+    gap: 12px;
+  }
+
   .sidebar-menu {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sidebar-link {
+    min-height: 46px;
+  }
+
+  .sidebar-collapse {
+    min-width: 40px;
+    min-height: 40px;
   }
 
   .choice-grid,
@@ -1759,6 +1792,24 @@ button {
     border-radius: 18px;
   }
 
+  .dashboard-toolbar {
+    padding: 12px;
+  }
+
+  .dashboard-toolbar .feature-header {
+    gap: 10px;
+  }
+
+  .dashboard-toolbar .flashcard-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .dashboard-toolbar .flashcard-actions .ghost-button {
+    width: 100%;
+  }
+
   .level-card__stats,
   .badge-grid,
   .streak-card__totals,
@@ -1788,6 +1839,8 @@ button {
     right: 12px;
     width: auto;
     transform: none !important;
+    max-height: calc(100vh - 24px);
+    overflow: auto;
   }
 
   .quest-form label:last-of-type {
@@ -1804,6 +1857,20 @@ button {
 
   .mana-card__topline strong {
     font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-toolbar .flashcard-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .tutorial-actions {
+    flex-direction: column;
+  }
+
+  .tutorial-actions button {
+    width: 100%;
   }
 }
 
@@ -2168,6 +2235,14 @@ button {
   display: inline-flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.dashboard-toolbar .flashcard-actions {
+  width: 100%;
+}
+
+.dashboard-toolbar .flashcard-actions .ghost-button {
+  min-height: 40px;
 }
 
 .result-banner--stack {

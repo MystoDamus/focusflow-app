@@ -82,11 +82,15 @@ function requestNotificationPermission() {
 }
 
 function ensureExpandedState(baseState) {
+  const defaultSidebarCollapsed =
+    baseState.ui?.sidebarCollapsed
+    ?? (typeof window !== "undefined" ? window.innerWidth < 1220 : false);
+
   return {
     ...baseState,
     ui: {
       activeView: "dashboard",
-      sidebarCollapsed: false,
+      sidebarCollapsed: defaultSidebarCollapsed,
       ...(baseState.ui ?? {}),
     },
     profile: {
