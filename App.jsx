@@ -1,5 +1,4 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
-import ActivityModeSelector from "./components/ActivityModeSelector";
 import AuthScreen from "./components/AuthScreen";
 import Confetti from "./components/Confetti";
 import SidebarNav from "./components/SidebarNav";
@@ -10,24 +9,18 @@ import useFlashcards from "./hooks/useFlashcards";
 import useSound from "./hooks/useSound";
 import usePlanner from "./hooks/usePlanner";
 import useQuiz from "./hooks/useQuiz";
-import { createInitialParty, applyPartyMemberXp, updatePartyMemberActivity, getPartyAverageLevel } from "./partySystem";
+import { createInitialParty, getPartyAverageLevel } from "./partySystem";
 import { getThemeForMode, getThemeById, getThemeCSSVariables } from "./themeSystem";
 
 const AnalyticsPage = lazy(() => import("./components/AnalyticsPage"));
 const AchievementsPage = lazy(() => import("./components/AchievementsPage"));
 const CustomizationPage = lazy(() => import("./components/CustomizationPage"));
-const CalendarPage = lazy(() => import("./components/CalendarPage"));
 const DashboardView = lazy(() => import("./components/DashboardView"));
 const FlashcardsPage = lazy(() => import("./components/FlashcardsPage"));
-const FocusPage = lazy(() => import("./components/FocusPage"));
-const GatheringPage = lazy(() => import("./components/GatheringPage"));
-const LeaderboardPage = lazy(() => import("./components/LeaderboardPage"));
-const NotesPage = lazy(() => import("./components/NotesPage"));
 const PartyViewer = lazy(() => import("./components/PartyViewer"));
 const PlannerPage = lazy(() => import("./components/PlannerPage"));
 const QuizBattlePage = lazy(() => import("./components/QuizBattlePage"));
 const ShopUI = lazy(() => import("./components/ShopUI"));
-const TravellingPage = lazy(() => import("./components/TravellingPage"));
 const TutorialOverlay = lazy(() => import("./components/TutorialOverlay"));
 import {
   DIFFICULTY_VALUES,
@@ -93,6 +86,7 @@ function ensureExpandedState(baseState) {
     ...baseState,
     ui: {
       activeView: "dashboard",
+      sidebarCollapsed: false,
       ...(baseState.ui ?? {}),
     },
     profile: {
@@ -291,7 +285,14 @@ function App() {
   const prestigeThemeChoices = activeSubject.progress.ownedThemes;
   const dailyQuote = getDailyQuote(state.dayKey);
   const dailyTip = getDailyTip(state.dayKey);
-  const activeMode = state.gameModes?.activeMode ?? "bossBattle";
+  const derivedMode = state.ui.activeView === "flashcards"
+    ? "travelling"
+    : state.ui.activeView === "quiz"
+      ? "bossBattle"
+      : state.timer.mode === "focus"
+        ? "focus"
+        : "gathering";
+  const activeMode = derivedMode;
   const modeTheme = state.gameModes?.useManualTheme
     ? getThemeById(state.gameModes?.manualThemeId ?? "default")
     : getThemeForMode(activeMode);
@@ -1325,17 +1326,12 @@ function App() {
     }));
   }
 
-  function setActiveMode(modeId) {
-    const viewId = modeId === "bossBattle" ? "dashboard" : modeId === "focus" ? "focus-ritual" : modeId;
+  function toggleSidebar() {
     setState((current) => ({
       ...current,
-      gameModes: {
-        ...current.gameModes,
-        activeMode: modeId,
-      },
       ui: {
         ...current.ui,
-        activeView: viewId,
+        sidebarCollapsed: !current.ui.sidebarCollapsed,
       },
     }));
   }
@@ -1345,29 +1341,6 @@ function App() {
       ...current,
       partyRoster: nextRoster,
     }));
-  }
-
-  function rewardModeCompletion(modeId, baseXp = 20, baseGold = 20) {
-    setState((current) => {
-      const upgradedRoster = current.partyRoster.map((member) => {
-        const progressed = applyPartyMemberXp(member, baseXp, modeId);
-        return updatePartyMemberActivity(progressed, modeId);
-      });
-
-      return {
-        ...current,
-        partyRoster: upgradedRoster,
-      };
-    });
-
-    if (accountProfile) {
-      updateProfile((prev) => ({
-        ...prev,
-        currency: (prev.currency ?? 0) + baseGold,
-      }));
-    }
-
-    showToast(`Mode complete: +${baseXp} XP to party and +${baseGold} Gold`);
   }
 
   function handleTutorialComplete() {
@@ -1426,6 +1399,17 @@ function App() {
   }
 
   function renderDashboard() {
+    const playerEntry = {
+      userId: accountProfile?.userId ?? "local-user",
+      ...buildCurrentLeaderboardEntry(),
+    };
+    const combined = remoteLeaderboard.length
+      ? [playerEntry, ...remoteLeaderboard.filter((entry) => entry.userId !== playerEntry.userId)]
+      : [playerEntry, ...CPU_LEADERBOARD];
+    const leaderboardPreview = combined
+      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+      .slice(0, 5);
+
     return (
       <DashboardView
         subjectPresets={SUBJECT_PRESETS}
@@ -1494,6 +1478,12 @@ function App() {
         onBuyShopItem={buyShopItem}
         onApplyPrestige={applyPrestige}
         partyRoster={state.partyRoster}
+        leaderboardPreview={leaderboardPreview}
+        examDates={state.calendar?.examDates ?? []}
+        notesItems={state.notesData?.items ?? []}
+        onOpenFlashcards={() => setActiveView("flashcards")}
+        onOpenQuiz={() => setActiveView("quiz")}
+        onOpenPlanner={() => setActiveView("planner")}
       />
     );
   }
@@ -1508,43 +1498,6 @@ function App() {
     }
 
     return <ShopUI userProfile={accountProfile} onPurchase={handleShopPurchase} />;
-  }
-
-  function renderLeaderboards() {
-    if (!accountProfile) {
-      return null;
-    }
-
-    const playerEntry = {
-      userId: accountProfile.userId,
-      ...buildCurrentLeaderboardEntry(),
-    };
-
-    const combined = remoteLeaderboard.length
-      ? [playerEntry, ...remoteLeaderboard.filter((entry) => entry.userId !== playerEntry.userId)]
-      : [playerEntry, ...CPU_LEADERBOARD];
-
-    return <LeaderboardPage userProfile={accountProfile} allLeaderboardData={combined} />;
-  }
-
-  function renderTravelling() {
-    const currentCard = activeSet?.cards?.[0] ?? null;
-    return (
-      <TravellingPage
-        currentFlashcard={currentCard}
-        onAnswer={() => rewardModeCompletion("travelling", 18, 12)}
-        party={state.partyRoster}
-        mode={activeMode}
-      />
-    );
-  }
-
-  function renderGathering() {
-    return <GatheringPage party={state.partyRoster} />;
-  }
-
-  function renderFocusRitual() {
-    return <FocusPage party={state.partyRoster} onComplete={() => rewardModeCompletion("focus", 12, 8)} />;
   }
 
   function renderAchievements() {
@@ -1641,32 +1594,6 @@ function App() {
     );
   }
 
-  function renderCalendar() {
-    return (
-      <CalendarPage
-        calendar={state.calendar}
-        subjects={state.subjects}
-        dayKey={state.dayKey}
-        onAddExam={addExam}
-        onRemoveExam={removeExam}
-      />
-    );
-  }
-
-  function renderNotes() {
-    return (
-      <NotesPage
-        notesData={state.notesData}
-        activeSubjectKey={state.activeSubject}
-        onAddNote={addNoteItem}
-        onDeleteNote={deleteNoteItem}
-        onUpdateNote={updateNoteItem}
-        onTogglePin={togglePinNote}
-        onToggleTag={toggleTagNote}
-      />
-    );
-  }
-
   function renderAnalytics() {
     return (
       <AnalyticsPage
@@ -1690,10 +1617,6 @@ function App() {
       return renderShop();
     }
 
-    if (state.ui.activeView === "leaderboard") {
-      return renderLeaderboards();
-    }
-
     if (state.ui.activeView === "achievements") {
       return renderAchievements();
     }
@@ -1706,18 +1629,6 @@ function App() {
       return renderQuiz();
     }
 
-    if (state.ui.activeView === "travelling") {
-      return renderTravelling();
-    }
-
-    if (state.ui.activeView === "gathering") {
-      return renderGathering();
-    }
-
-    if (state.ui.activeView === "focus-ritual") {
-      return renderFocusRitual();
-    }
-
     if (state.ui.activeView === "customize") {
       return renderCustomization();
     }
@@ -1728,14 +1639,6 @@ function App() {
 
     if (state.ui.activeView === "analytics") {
       return renderAnalytics();
-    }
-
-    if (state.ui.activeView === "calendar") {
-      return renderCalendar();
-    }
-
-    if (state.ui.activeView === "notes") {
-      return renderNotes();
     }
 
     return renderDashboard();
@@ -1760,20 +1663,22 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${state.ui.sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
       <SidebarNav
         activeView={state.ui.activeView}
         seasonTitle={state.season.title}
         onSetActiveView={setActiveView}
+        collapsed={Boolean(state.ui.sidebarCollapsed)}
+        onToggleCollapse={toggleSidebar}
       />
 
       <main
         className={`dashboard-shell feature-shell theme-${currentTheme} ${state.settings.highContrast ? "a11y-high-contrast" : ""} ${state.settings.largeText ? "a11y-large-text" : ""} ${state.settings.reducedMotion ? "a11y-reduced-motion" : ""}`}
         style={{ "--anim-scale": state.settings.reducedMotion ? 0.2 : 1, ...themeVars }}
       ><Confetti active={showConfetti} />
-        <section className="panel" style={{ marginBottom: 12 }}>
+        <section className="panel dashboard-toolbar" style={{ marginBottom: 12 }} data-tutorial="toolbar">
           <div className="feature-header" style={{ marginBottom: 10 }}>
-            <h2>Mode and Theme</h2>
+            <h2>Workspace Controls</h2>
             <div className="pill-inline" style={{ marginLeft: "auto" }}>
               {backendEnabled ? `Cloud Sync: ${syncStatus}` : "Cloud Sync: local-only"}
             </div>
@@ -1782,10 +1687,9 @@ function App() {
             ) : null}
             <div className="flashcard-actions">
               <button type="button" className="ghost-button" onClick={() => setActiveView("dashboard")}>Main Dashboard</button>
-              <button type="button" className="ghost-button" onClick={() => setActiveMode("bossBattle")}>Boss Battle Mode</button>
-              <button type="button" className="ghost-button" onClick={() => setActiveMode("travelling")}>Travelling Mode</button>
-              <button type="button" className="ghost-button" onClick={() => setActiveMode("gathering")}>Gathering Mode</button>
-              <button type="button" className="ghost-button" onClick={() => setActiveMode("focus")}>Focus Mode</button>
+              <button type="button" className="ghost-button" onClick={() => setActiveView("planner")}>Planner</button>
+              <button type="button" className="ghost-button" onClick={() => setActiveView("flashcards")}>Flashcards</button>
+              <button type="button" className="ghost-button" onClick={() => setActiveView("quiz")}>Quiz Battle</button>
               <button type="button" className="ghost-button" onClick={useAutomaticTheme}>Use Auto Theme</button>
               <button type="button" className="ghost-button" onClick={() => handleProfileThemePick("default")}>Classic Theme</button>
               <button type="button" className="ghost-button" onClick={() => handleProfileThemePick("neon")}>Neon Theme</button>
@@ -1793,11 +1697,6 @@ function App() {
               <button type="button" className="ghost-button" onClick={logout}>Logout</button>
             </div>
           </div>
-          <ActivityModeSelector
-            onSelectMode={setActiveMode}
-            currentMode={activeMode}
-            partyLevel={getPartyAverageLevel(state.partyRoster)}
-          />
         </section>
         
         {rewardToast ? <div className="global-toast">{rewardToast}</div> : null}

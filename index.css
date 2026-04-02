@@ -222,6 +222,75 @@ button {
   min-width: 0;
 }
 
+.dashboard-toolbar {
+  padding: 14px 16px;
+}
+
+.dashboard-utility-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dashboard-utility-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.dashboard-utility-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.dashboard-utility-head h3 {
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+.dashboard-utility-head span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.dashboard-utility-list {
+  display: grid;
+  gap: 7px;
+}
+
+.dashboard-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.86rem;
+}
+
+.dashboard-row--stacked {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.dashboard-row--stacked span {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.dashboard-quick-actions h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.dashboard-action-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
 /* ── Panel base ────────────────────────────────────────── */
 .panel {
   position: relative;
@@ -1018,6 +1087,19 @@ button {
   font-weight: 800;
 }
 
+.sidebar-collapse {
+  margin-left: auto;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .sidebar-menu {
   display: grid;
   gap: 8px;
@@ -1033,6 +1115,29 @@ button {
   gap: 8px;
   align-items: center;
   text-align: left;
+}
+
+.sidebar-link span:empty {
+  display: none;
+}
+
+.app-shell.sidebar-collapsed {
+  grid-template-columns: 78px minmax(0, 1fr);
+}
+
+.sidebar-nav.is-collapsed {
+  padding: 12px 10px;
+}
+
+.sidebar-nav.is-collapsed .sidebar-menu {
+  justify-items: center;
+}
+
+.sidebar-nav.is-collapsed .sidebar-link {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  justify-content: center;
 }
 
 .sidebar-link.is-active {
@@ -1053,6 +1158,131 @@ button {
 
 .feature-shell {
   width: 100%;
+}
+
+/* Guided tutorial overlay */
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+}
+
+.tutorial-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 4, 12, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.tutorial-highlight {
+  position: absolute;
+  border: 2px solid rgba(255, 211, 108, 0.82);
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(8, 6, 16, 0.48), 0 0 20px rgba(255, 211, 108, 0.36);
+  pointer-events: none;
+}
+
+.tutorial-avatar-pointer {
+  position: absolute;
+  font-size: 1.8rem;
+  z-index: 10003;
+  animation: bob 1.2s ease-in-out infinite;
+}
+
+.tutorial-card {
+  position: absolute;
+  z-index: 10004;
+  width: min(360px, calc(100vw - 24px));
+  border-radius: 16px;
+  border: 1px solid rgba(255, 211, 108, 0.35);
+  background: linear-gradient(180deg, rgba(22, 14, 40, 0.98), rgba(12, 8, 24, 0.98));
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  padding: 14px;
+}
+
+.tutorial-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.tutorial-step-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.tutorial-avatar {
+  font-size: 1.4rem;
+}
+
+.tutorial-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.tutorial-step-top h3 {
+  margin: 2px 0 0;
+  font-size: 1rem;
+}
+
+.tutorial-copy {
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 10px 0 14px;
+}
+
+.tutorial-progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.tutorial-progress > span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.tutorial-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.tutorial-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.tutorial-dot.is-active {
+  width: 20px;
+  background: var(--accent);
+}
+
+.tutorial-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 .global-toast {
@@ -1493,6 +1723,10 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .dashboard-utility-grid {
+    grid-template-columns: 1fr;
+  }
+
   .hero-bar {
     grid-template-columns: 1fr;
   }
@@ -1547,6 +1781,13 @@ button {
   .panel-heading {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .tutorial-card {
+    left: 12px !important;
+    right: 12px;
+    width: auto;
+    transform: none !important;
   }
 
   .quest-form label:last-of-type {
