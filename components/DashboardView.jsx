@@ -82,92 +82,97 @@ function DashboardView({
         guild={state.guild}
         levelFlash={levelFlash}
         dailyQuote={dailyQuote}
-        dailyTip={dailyTip}
         onSwitchSubject={onSwitchSubject}
       />
 
-      <section className="dashboard-grid">
-        <QuestPanel
-          activeSubject={activeSubject}
-          dayKey={state.dayKey}
-          event={state.event}
-          rewardToast={rewardToast}
-          newQuestTitle={newQuestTitle}
-          newQuestDifficulty={newQuestDifficulty}
-          newTemplateTitle={newTemplateTitle}
-          newTemplateType={newTemplateType}
-          newTemplateDifficulty={newTemplateDifficulty}
-          revisionQueue={revisionQueue}
-          ambientEnabled={state.settings.ambientEnabled}
-          ambientMode={state.settings.ambientMode}
-          onCompleteQuest={onCompleteQuest}
-          onSetNewQuestTitle={onSetNewQuestTitle}
-          onSetNewQuestDifficulty={onSetNewQuestDifficulty}
-          onAddCustomQuest={onAddCustomQuest}
-          onRegenerateQuests={onRegenerateQuests}
-          onToggleAmbientAudio={onToggleAmbientAudio}
-          onResolveRevision={onResolveRevision}
-          getReviewUrgency={getReviewUrgency}
-          onSetNewTemplateTitle={onSetNewTemplateTitle}
-          battle={battle}
-          party={partyRoster}
-          profile={state.profile}
-          onSetNewTemplateType={onSetNewTemplateType}
-          onSetNewTemplateDifficulty={onSetNewTemplateDifficulty}
-          onAddTemplate={onAddTemplate}
-        />
+      <div className="dashboard-layout">
+        {/* Main column: quests */}
+        <div className="dashboard-main">
+          <QuestPanel
+            activeSubject={activeSubject}
+            dayKey={state.dayKey}
+            event={state.event}
+            rewardToast={rewardToast}
+            newQuestTitle={newQuestTitle}
+            newQuestDifficulty={newQuestDifficulty}
+            newTemplateTitle={newTemplateTitle}
+            newTemplateType={newTemplateType}
+            newTemplateDifficulty={newTemplateDifficulty}
+            revisionQueue={revisionQueue}
+            ambientEnabled={state.settings.ambientEnabled}
+            ambientMode={state.settings.ambientMode}
+            onCompleteQuest={onCompleteQuest}
+            onSetNewQuestTitle={onSetNewQuestTitle}
+            onSetNewQuestDifficulty={onSetNewQuestDifficulty}
+            onAddCustomQuest={onAddCustomQuest}
+            onRegenerateQuests={onRegenerateQuests}
+            onToggleAmbientAudio={onToggleAmbientAudio}
+            onResolveRevision={onResolveRevision}
+            getReviewUrgency={getReviewUrgency}
+            onSetNewTemplateTitle={onSetNewTemplateTitle}
+            battle={battle}
+            party={partyRoster}
+            profile={state.profile}
+            onSetNewTemplateType={onSetNewTemplateType}
+            onSetNewTemplateDifficulty={onSetNewTemplateDifficulty}
+            onAddTemplate={onAddTemplate}
+          />
+        </div>
 
-        <TimerPanel
-          timer={state.timer}
-          manaPercent={manaPercent}
-          activeSubject={activeSubject}
-          party={state.party}
-          partyContribution={partyContribution}
-          partyPercent={partyPercent}
-          goalPercent={goalPercent}
-          goalLabel={goalLabel}
-          goalSessions={goalSessions}
-          formatTime={formatTime}
-          onToggleTimer={onToggleTimer}
-          onResetTimer={onResetTimer}
-          onSaveGoal={onSaveGoal}
-          onSetGoalLabel={onSetGoalLabel}
-          onSetGoalSessions={onSetGoalSessions}
-          semesterDeadline={semesterDeadline}
-          onSetTimerPreset={onSetTimerPreset}
-        />
+        {/* Side column: timer + companion */}
+        <div className="dashboard-side">
+          <TimerPanel
+            timer={state.timer}
+            manaPercent={manaPercent}
+            activeSubject={activeSubject}
+            party={state.party}
+            partyContribution={partyContribution}
+            partyPercent={partyPercent}
+            goalPercent={goalPercent}
+            goalLabel={goalLabel}
+            goalSessions={goalSessions}
+            formatTime={formatTime}
+            onToggleTimer={onToggleTimer}
+            onResetTimer={onResetTimer}
+            onSaveGoal={onSaveGoal}
+            onSetGoalLabel={onSetGoalLabel}
+            onSetGoalSessions={onSetGoalSessions}
+            semesterDeadline={semesterDeadline}
+            onSetTimerPreset={onSetTimerPreset}
+          />
 
-        <CompanionPanel
-          activeSubject={activeSubject}
-          petCelebrating={petCelebrating}
-          showSettings={showSettings}
-          settings={state.settings}
-          currentTheme={currentTheme}
-          prestigeThemeChoices={prestigeThemeChoices}
-          importFileRef={importFileRef}
-          journalPreview={journalPreview}
-          journalPrompt={journalPrompt}
-          reflectionText={reflectionText}
-          prestigeEligible={prestigeEligible}
-          streak={streak}
-          noteText={noteText}
-          guild={state.guild}
-          onToggleSound={onToggleSound}
-          onToggleSettings={onToggleSettings}
-          onUpdateSetting={onUpdateSetting}
-          onToggleNotifications={onToggleNotifications}
-          onToggleAmbientAudio={onToggleAmbientAudio}
-          onChangeTheme={onChangeTheme}
-          onExportBackup={onExportBackup}
-          onImportBackup={onImportBackup}
-          onSetReflectionText={onSetReflectionText}
-          onAddReflection={onAddReflection}
-          onUpdateNote={onUpdateNote}
-          shopItems={shopItems}
-          onBuyShopItem={onBuyShopItem}
-          onApplyPrestige={onApplyPrestige}
-        />
-      </section>
+          <CompanionPanel
+            activeSubject={activeSubject}
+            petCelebrating={petCelebrating}
+            showSettings={showSettings}
+            settings={state.settings}
+            currentTheme={currentTheme}
+            prestigeThemeChoices={prestigeThemeChoices}
+            importFileRef={importFileRef}
+            journalPreview={journalPreview}
+            journalPrompt={journalPrompt}
+            reflectionText={reflectionText}
+            prestigeEligible={prestigeEligible}
+            streak={streak}
+            noteText={noteText}
+            guild={state.guild}
+            onToggleSound={onToggleSound}
+            onToggleSettings={onToggleSettings}
+            onUpdateSetting={onUpdateSetting}
+            onToggleNotifications={onToggleNotifications}
+            onToggleAmbientAudio={onToggleAmbientAudio}
+            onChangeTheme={onChangeTheme}
+            onExportBackup={onExportBackup}
+            onImportBackup={onImportBackup}
+            onSetReflectionText={onSetReflectionText}
+            onAddReflection={onAddReflection}
+            onUpdateNote={onUpdateNote}
+            shopItems={shopItems}
+            onBuyShopItem={onBuyShopItem}
+            onApplyPrestige={onApplyPrestige}
+          />
+        </div>
+      </div>
     </>
   );
 }
