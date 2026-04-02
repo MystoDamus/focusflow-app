@@ -336,20 +336,32 @@ button {
   background: rgba(5, 4, 11, 0.76);
   backdrop-filter: blur(6px);
   z-index: 9500;
-  display: grid;
-  place-items: center;
   padding: 18px;
 }
 
 .dashboard-modal {
-  width: min(1200px, 100%);
-  max-height: calc(100vh - 36px);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1000px;
+  height: 600px;
   background: linear-gradient(180deg, rgba(20, 12, 36, 0.98), rgba(10, 6, 20, 0.98));
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 18px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, 0.64);
+  transition: cursor 0.2s;
+}
+
+.dashboard-modal.is-dragging {
+  cursor: grabbing;
+}
+
+.dashboard-modal.is-resizing {
+  cursor: nwse-resize;
+  user-select: none;
 }
 
 .dashboard-modal__top {
@@ -358,6 +370,17 @@ button {
   justify-content: space-between;
   padding: 12px 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: grab;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+.dashboard-modal__top:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.dashboard-modal__top:active {
+  cursor: grabbing;
 }
 
 .dashboard-modal__top h3 {
@@ -368,6 +391,23 @@ button {
 .dashboard-modal__content {
   overflow: auto;
   padding: 8px;
+  flex: 1;
+}
+
+.dashboard-modal__resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  cursor: nwse-resize;
+  background: linear-gradient(135deg, transparent 50%, rgba(255, 213, 108, 0.3) 50%);
+  border-radius: 0 0 16px 0;
+  transition: background 0.2s;
+}
+
+.dashboard-modal__resize-handle:hover {
+  background: linear-gradient(135deg, transparent 50%, rgba(255, 213, 108, 0.6) 50%);
 }
 
 /* ── Panel base ────────────────────────────────────────── */
@@ -1868,6 +1908,11 @@ button {
 
   .hero-bar__subjects {
     flex-wrap: wrap;
+  }
+
+  .dashboard-modal {
+    width: 90vw !important;
+    height: 80vh !important;
   }
 }
 

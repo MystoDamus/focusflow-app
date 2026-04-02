@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import CalendarPage from "./CalendarPage";
 import CompanionPanel from "./CompanionPanel";
 import HeroPanel from "./HeroPanel";
@@ -100,6 +100,16 @@ function DashboardView({
   const [todayMode, setTodayMode] = useState(false);
   const [showSecondary, setShowSecondary] = useState(false);
 
+  // Modal position and size (draggable/resizable)
+  const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
+  const [modalSize, setModalSize] = useState({ width: 1000, height: 600 });
+  const [isModalDragging, setIsModalDragging] = useState(false);
+  const [isModalResizing, setIsModalResizing] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [resizeStartSize, setResizeStartSize] = useState({ width: 0, height: 0 });
+  const [resizeStartPos, setResizeStartPos] = useState({ x: 0, y: 0 });
+  const modalRef = useRef(null);
+
   const upcomingExams = [...examDates]
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .slice(0, 3);
@@ -119,6 +129,71 @@ function DashboardView({
   function showAllWidgets() {
     setHiddenWidgets([]);
   }
+
+  function handleModalMouseDown(e) {
+    if (e.target.closest("button")) return; // Don't drag when clicking buttons
+    const rect = modalRef.current.getBoundingClientRect();
+    setIsModalDragging(true);
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  }
+
+  function handleResizeMouseDown(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsModalResizing(true);
+    setResizeStartPos({ x: e.clientX, y: e.clientY });
+    setResizeStartSize({ ...modalSize });
+  }
+
+  useEffect(() => {
+    if (!isModalDragging && !isModalResizing) return;
+
+    function handleMouseMove(e) {
+      if (isModalDragging) {
+        const newX = e.clientX - dragOffset.x;
+        const newY = e.clientY - dragOffset.y;
+        const maxX = window.innerWidth - modalSize.width;
+        const maxY = window.innerHeight - modalSize.height;
+
+        setModalPosition({
+          x: Math.max(0, Math.min(newX, maxX)),
+          y: Math.max(0, Math.min(newY, maxY)),
+        });
+      }
+
+      if (isModalResizing) {
+        const deltaX = e.clientX - resizeStartPos.x;
+        const deltaY = e.clientY - resizeStartPos.y;
+        const newWidth = Math.max(400, resizeStartSize.width + deltaX);
+        const newHeight = Math.max(300, resizeStartSize.height + deltaY);
+
+        // Prevent modal from exceeding viewport
+        const maxWidth = window.innerWidth - modalPosition.x - 18;
+        const maxHeight = window.innerHeight - modalPosition.y - 18;
+
+        setModalSize({
+          width: Math.min(newWidth, maxWidth),
+          height: Math.min(newHeight, maxHeight),
+        });
+      }
+    }
+
+    function handleMouseUp() {
+      setIsModalDragging(false);
+      setIsModalResizing(false);
+    }
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isModalDragging, isModalResizing, dragOffset, resizeStartPos, resizeStartSize, modalSize, modalPosition]);
 
   function widgetHeader(title, meta, id) {
     return (
@@ -321,8 +396,17 @@ function DashboardView({
 
       {maximizedWidget ? (
         <div className="dashboard-modal-overlay" role="dialog" aria-modal="true">
-          <div className="dashboard-modal">
-            <div className="dashboard-modal__top">
+          <div
+            ref={modalRef}
+            className={`dashboard-modal ${isModalDragging ? "is-dragging" : ""} ${isModalResizing ? "is-resizing" : ""}`}
+            style={{
+              left: `${modalPosition.x}px`,
+              top: `${modalPosition.y}px`,
+              width: `${modalSize.width}px`,
+              height: `${modalSize.height}px`,
+            }}
+          >
+            <div className="dashboard-modal__top" onMouseDown={handleModalMouseDown}>
               <h3>
                 {maximizedWidget === "leaderboard" ? "Leaderboard" : maximizedWidget === "calendar" ? "Calendar" : "Notes"}
               </h3>
@@ -355,6 +439,7 @@ function DashboardView({
                 />
               ) : null}
             </div>
+            <div className="dashboard-modal__resize-handle" onMouseDown={handleResizeMouseDown} title="Drag to resize"></div>
           </div>
         </div>
       ) : null}
