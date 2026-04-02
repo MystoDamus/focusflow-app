@@ -1,0 +1,2 @@
+user_id,event_type,severity,message,context,created_at
+11111111-1111-1111-1111-111111111111,release_test,info,Smoke test event,"{}",2026-04-03T00:00:00Z

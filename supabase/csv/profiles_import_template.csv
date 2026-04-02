@@ -1,0 +1,2 @@
+id,email,display_name,currency,shards,current_theme,tutorial_completed,tutorial_skipped,leaderboard_stats,stats,owned_items,created_at,updated_at
+11111111-1111-1111-1111-111111111111,demo@example.com,Demo Player,0,0,default,false,false,"{}","{}","[]",2026-04-03T00:00:00Z,2026-04-03T00:00:00Z
