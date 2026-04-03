@@ -1,4 +1,5 @@
-import { Pause, Play, RefreshCcw, WandSparkles } from "lucide-react";
+import { useState } from "react";
+import { Pause, Play, RefreshCcw, WandSparkles, Maximize2, Settings } from "lucide-react";
 
 function TimerPanel({
   timer,
@@ -18,16 +19,25 @@ function TimerPanel({
   onSetGoalSessions,
   semesterDeadline,
   onSetTimerPreset,
+  onMaximizeTimer,
+  onSetCustomTimer,
 }) {
+    const [showCustom, setShowCustom] = useState(false);
+    const [customFocus, setCustomFocus] = useState(activeSubject.focusMinutes);
+    const [customBreak, setCustomBreak] = useState(activeSubject.breakMinutes);
+
     const PRESETS = [
       { label: "25m", focus: 25, brk: 5 },
       { label: "45m", focus: 45, brk: 10 },
       { label: "90m", focus: 90, brk: 15 },
     ];
 
-    const daysRemaining = semesterDeadline
-      ? Math.max(0, Math.ceil((new Date(semesterDeadline) - new Date()) / (1000 * 60 * 60 * 24)))
-      : null;
+    const handleCustomSubmit = () => {
+      if (customFocus > 0 && customBreak > 0) {
+        onSetCustomTimer(customFocus, customBreak);
+        setShowCustom(false);
+      }
+    };
 
   return (
     <article className="panel timer-panel">
@@ -36,9 +46,20 @@ function TimerPanel({
           <span className="eyebrow">Mana Bar</span>
           <h2>Focus ritual</h2>
         </div>
-        <div className={`mode-pill mode-pill--${timer.mode}`}>
-          <WandSparkles size={14} />
-          <span>{timer.mode === "focus" ? "Focus phase" : "Break phase"}</span>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <button
+            type="button"
+            className="icon-button"
+            onClick={onMaximizeTimer}
+            title="Maximize timer"
+            aria-label="Maximize timer"
+          >
+            <Maximize2 size={16} />
+          </button>
+          <div className={`mode-pill mode-pill--${timer.mode}`}>
+            <WandSparkles size={14} />
+            <span>{timer.mode === "focus" ? "Focus phase" : "Break phase"}</span>
+          </div>
         </div>
       </div>
 
@@ -53,7 +74,73 @@ function TimerPanel({
             {p.label}
           </button>
         ))}
+        <button
+          type="button"
+          className="preset-btn ghost-button"
+          onClick={() => setShowCustom(!showCustom)}
+          title="Custom timer"
+        >
+          <Settings size={14} />
+        </button>
       </div>
+
+      {showCustom && (
+        <div style={{ 
+          display: "flex", 
+          gap: "8px", 
+          marginBottom: "12px", 
+          padding: "12px", 
+          backgroundColor: "rgba(99, 199, 255, 0.1)",
+          borderRadius: "8px"
+        }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: "12px", opacity: 0.7 }}>Focus (min)</label>
+            <input
+              type="number"
+              min="1"
+              max="180"
+              value={customFocus}
+              onChange={(e) => setCustomFocus(Math.max(1, Number(e.target.value)))}
+              style={{
+                width: "100%",
+                padding: "6px",
+                backgroundColor: "rgba(11, 7, 20, 0.8)",
+                border: "1px solid rgba(214, 176, 92, 0.25)",
+                color: "#f7ecd0",
+                borderRadius: "4px",
+                marginTop: "4px"
+              }}
+            />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: "12px", opacity: 0.7 }}>Break (min)</label>
+            <input
+              type="number"
+              min="1"
+              max="60"
+              value={customBreak}
+              onChange={(e) => setCustomBreak(Math.max(1, Number(e.target.value)))}
+              style={{
+                width: "100%",
+                padding: "6px",
+                backgroundColor: "rgba(11, 7, 20, 0.8)",
+                border: "1px solid rgba(214, 176, 92, 0.25)",
+                color: "#f7ecd0",
+                borderRadius: "4px",
+                marginTop: "4px"
+              }}
+            />
+          </div>
+          <button
+            type="button"
+            className="accent-button"
+            onClick={handleCustomSubmit}
+            style={{ alignSelf: "flex-end" }}
+          >
+            Set
+          </button>
+        </div>
+      )}
 
       <div className="mana-card">
         <div className="mana-card__topline">
@@ -79,42 +166,6 @@ function TimerPanel({
         </button>
       </div>
 
-      <div className="timer-stats">
-        <div>
-          <span>Cycles</span>
-          <strong>{activeSubject.progress.focusCycles}</strong>
-        </div>
-        <div>
-          <span>Tonics</span>
-          <strong>{activeSubject.progress.xpTonics}</strong>
-        </div>
-        <div>
-          <span>Shield</span>
-          <strong>{activeSubject.progress.streakShield}</strong>
-        </div>
-      </div>
-
-      <div className="party-card">
-        <div className="heatmap-card__header">
-          <span className="eyebrow">Party Board</span>
-          <span>{partyContribution}/{party.weeklyTarget}</span>
-        </div>
-        <div className="xp-track">
-          <div className="xp-fill" style={{ width: `${partyPercent}%` }} />
-        </div>
-        <div className="party-list">
-          {party.members.map((member) => (
-            <div key={member.name} className="party-item">
-              <div>
-                <strong>{member.name}</strong>
-                <span>{member.role}</span>
-              </div>
-              <span>{member.quests} quests</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
       <div className="goal-card">
         <div className="heatmap-card__header">
           <span className="eyebrow">Semester Goal</span>
@@ -136,9 +187,9 @@ function TimerPanel({
         </div>
         <div className="goal-timeline-footer">
           <span>{activeSubject.semesterGoal.completedSessions}/{activeSubject.semesterGoal.targetSessions} sessions · {goalPercent}%</span>
-          {daysRemaining !== null && (
-            <span className={daysRemaining < 14 ? "warning-text" : "muted-text"}>
-              {daysRemaining}d left
+          {semesterDeadline && (
+            <span className={Math.max(0, Math.ceil((new Date(semesterDeadline) - new Date()) / (1000 * 60 * 60 * 24))) < 14 ? "warning-text" : "muted-text"}>
+              {Math.max(0, Math.ceil((new Date(semesterDeadline) - new Date()) / (1000 * 60 * 60 * 24)))}d left
             </span>
           )}
         </div>

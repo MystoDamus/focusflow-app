@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
+﻿import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import AuthScreen from "./components/AuthScreen";
 import Confetti from "./components/Confetti";
 import SidebarNav from "./components/SidebarNav";
@@ -17,7 +17,12 @@ const AchievementsPage = lazy(() => import("./components/AchievementsPage"));
 const CustomizationPage = lazy(() => import("./components/CustomizationPage"));
 const DashboardView = lazy(() => import("./components/DashboardView"));
 const FlashcardsPage = lazy(() => import("./components/FlashcardsPage"));
+const FullscreenTimer = lazy(() => import("./components/FullscreenTimer"));
 const PartyViewer = lazy(() => import("./components/PartyViewer"));
+const PlannerPage = lazy(() => import("./components/PlannerPage"));
+const PracticeTestPage = lazy(() => import("./components/PracticeTestPage"));
+const ProgressPage = lazy(() => import("./components/ProgressPage"));
+const ProfilePage = lazy(() => import("./components/ProfilePage"));
 const QuizBattlePage = lazy(() => import("./components/QuizBattlePage"));
 const ShopUI = lazy(() => import("./components/ShopUI"));
 const TutorialOverlay = lazy(() => import("./components/TutorialOverlay"));
@@ -197,6 +202,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [rewardToast, setRewardToast] = useState("");
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showFullscreenTimer, setShowFullscreenTimer] = useState(false);
   const {
     user,
     profile: accountProfile,
@@ -232,13 +238,22 @@ function App() {
     newCardQuestion,
     newCardAnswer,
     newCardChoices,
+    editingCardId,
+    studyFilter,
     setNewSetTitle,
     setNewCardQuestion,
     setNewCardAnswer,
     setNewCardChoices,
+    setEditingCardId,
+    setStudyFilter,
     addFlashcardSet,
     addFlashcardCard,
+    deleteFlashcardCard,
+    deleteFlashcardSet,
+    updateFlashcardCard,
     startFlashcardSession,
+    startFlashcardSessionFiltered,
+    importCardsFromText,
     answerFlashcard,
     answerOpenFlashcard,
     rateFlashcard,
@@ -249,6 +264,7 @@ function App() {
     quizQuestion,
     accuracy,
     startQuizBattle,
+    startSpeedRun,
     answerQuiz,
     answerOpenQuestion,
     useFiftyFifty,
@@ -264,7 +280,7 @@ function App() {
   } =
     useQuiz(state, setState, activeSet, showToast, hasHealer);
   const { playSound } = useSound(state.settings);
-  const { plannerDraft, setPlannerDraft, plannerCompletion, addPlannerMission, toggleMissionStatus } =
+  const { plannerDraft, setPlannerDraft, plannerCompletion, addPlannerMission, toggleMissionStatus, deletePlannerMission } =
     usePlanner(state, setState);
 
   const activeSubject = state.subjects[state.activeSubject];
@@ -488,6 +504,16 @@ function App() {
             xp: current.season.xp + 5,
             tier: 1 + Math.floor((current.season.xp + 5) / 150),
           },
+          sessionHistory: current.timer.mode === "focus"
+            ? [
+                ...(current.sessionHistory ?? []),
+                {
+                  date: new Date().toISOString(),
+                  duration: Math.round(getTimerDuration(subject, "focus") / 60),
+                  subject: subject?.name ?? current.activeSubject,
+                },
+              ].slice(-300)
+            : (current.sessionHistory ?? []),
         };
       });
     }, 1000);
@@ -634,8 +660,40 @@ function App() {
     setState((current) => {
       const subject = current.subjects[current.activeSubject];
       const targetQuest = subject.quests.find((quest) => quest.id === questId);
-      if (!targetQuest || targetQuest.completed) {
+      if (!targetQuest) {
         return current;
+      }
+
+      if (targetQuest.completed) {
+        showToast("Quest marked as not done");
+        return {
+          ...current,
+          subjects: {
+            ...current.subjects,
+            [current.activeSubject]: {
+              ...subject,
+              quests: subject.quests.map((quest) =>
+                quest.id === questId ? { ...quest, completed: false } : quest,
+              ),
+            },
+          },
+        };
+      }
+
+      if (targetQuest.rewardClaimed) {
+        showToast("Quest re-completed");
+        return {
+          ...current,
+          subjects: {
+            ...current.subjects,
+            [current.activeSubject]: {
+              ...subject,
+              quests: subject.quests.map((quest) =>
+                quest.id === questId ? { ...quest, completed: true } : quest,
+              ),
+            },
+          },
+        };
       }
 
       if (targetQuest.requiresId) {
@@ -661,7 +719,7 @@ function App() {
       const nextSubject = {
         ...subject,
         quests: subject.quests.map((quest) =>
-          quest.id === questId ? { ...quest, completed: true } : quest,
+          quest.id === questId ? { ...quest, completed: true, rewardClaimed: true } : quest,
         ),
         progress: {
           ...nextProgress,
@@ -813,12 +871,145 @@ function App() {
     showToast("Reflection saved");
   }
 
+  function deleteReflection(entryId) {
+    setState((current) => {
+      const subject = current.subjects[current.activeSubject];
+      return {
+        ...current,
+        subjects: {
+          ...current.subjects,
+          [current.activeSubject]: {
+            ...subject,
+            journal: subject.journal.filter((entry) => entry.id !== entryId),
+          },
+        },
+      };
+    });
+  }
+
+  function deleteQuest(questId) {
+    setState((current) => {
+      const subject = current.subjects[current.activeSubject];
+      return {
+        ...current,
+        subjects: {
+          ...current.subjects,
+          [current.activeSubject]: {
+            ...subject,
+            quests: subject.quests.filter((quest) => quest.id !== questId),
+          },
+        },
+      };
+    });
+  }
+
   function addTemplate(event) {
     event.preventDefault();
     if (!newTemplateTitle.trim()) {
       return;
     }
 
+  // â”€â”€ Formulas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  function addFormulaSheet(id, title) {
+    setState((c) => ({ ...c, formulas: [...(c.formulas ?? []), { id, title, sections: [] }] }));
+  }
+  function deleteFormulaSheet(sheetId) {
+    setState((c) => ({ ...c, formulas: (c.formulas ?? []).filter((s) => s.id !== sheetId) }));
+  }
+  function addFormulaSection(sheetId, sectionId, title) {
+    setState((c) => ({
+      ...c,
+      formulas: (c.formulas ?? []).map((s) =>
+        s.id === sheetId ? { ...s, sections: [...s.sections, { id: sectionId, title, items: [] }] } : s,
+      ),
+    }));
+  }
+  function deleteFormulaSection(sheetId, sectionId) {
+    setState((c) => ({
+      ...c,
+      formulas: (c.formulas ?? []).map((s) =>
+        s.id === sheetId ? { ...s, sections: s.sections.filter((sec) => sec.id !== sectionId) } : s,
+      ),
+    }));
+  }
+  function addFormulaItem(sheetId, sectionId, itemId, text) {
+    setState((c) => ({
+      ...c,
+      formulas: (c.formulas ?? []).map((s) =>
+        s.id === sheetId
+          ? { ...s, sections: s.sections.map((sec) => sec.id === sectionId ? { ...sec, items: [...sec.items, { id: itemId, text }] } : sec) }
+          : s,
+      ),
+    }));
+  }
+  function deleteFormulaItem(sheetId, sectionId, itemId) {
+    setState((c) => ({
+      ...c,
+      formulas: (c.formulas ?? []).map((s) =>
+        s.id === sheetId
+          ? { ...s, sections: s.sections.map((sec) => sec.id === sectionId ? { ...sec, items: sec.items.filter((item) => item.id !== itemId) } : sec) }
+          : s,
+      ),
+    }));
+  }
+  function updateFormulaItem(sheetId, sectionId, itemId, text) {
+    setState((c) => ({
+      ...c,
+      formulas: (c.formulas ?? []).map((s) =>
+        s.id === sheetId
+          ? { ...s, sections: s.sections.map((sec) => sec.id === sectionId ? { ...sec, items: sec.items.map((item) => item.id === itemId ? { ...item, text } : item) } : sec) }
+          : s,
+      ),
+    }));
+  }
+
+  // â”€â”€ Outlines â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  function addOutline(id, title) {
+    setState((c) => ({ ...c, outlines: [...(c.outlines ?? []), { id, title, nodes: [] }] }));
+  }
+  function deleteOutline(outlineId) {
+    setState((c) => ({ ...c, outlines: (c.outlines ?? []).filter((o) => o.id !== outlineId) }));
+  }
+  function addOutlineNode(outlineId, afterId) {
+    setState((c) => {
+      const outline = (c.outlines ?? []).find((o) => o.id === outlineId);
+      if (!outline) return c;
+      const newNode = { id: `node-${Date.now()}`, text: "", depth: 0 };
+      let nodes;
+      if (!afterId) {
+        nodes = [...outline.nodes, newNode];
+      } else {
+        const idx = outline.nodes.findIndex((n) => n.id === afterId);
+        const depth = idx >= 0 ? (outline.nodes[idx].depth ?? 0) : 0;
+        nodes = [...outline.nodes.slice(0, idx + 1), { ...newNode, depth }, ...outline.nodes.slice(idx + 1)];
+      }
+      return { ...c, outlines: (c.outlines ?? []).map((o) => (o.id === outlineId ? { ...o, nodes } : o)) };
+    });
+  }
+  function deleteOutlineNode(outlineId, nodeId) {
+    setState((c) => ({
+      ...c,
+      outlines: (c.outlines ?? []).map((o) => o.id === outlineId ? { ...o, nodes: o.nodes.filter((n) => n.id !== nodeId) } : o),
+    }));
+  }
+  function updateOutlineNode(outlineId, nodeId, text) {
+    setState((c) => ({
+      ...c,
+      outlines: (c.outlines ?? []).map((o) => o.id === outlineId ? { ...o, nodes: o.nodes.map((n) => n.id === nodeId ? { ...n, text } : n) } : o),
+    }));
+  }
+  function indentOutlineNode(outlineId, nodeId) {
+    setState((c) => ({
+      ...c,
+      outlines: (c.outlines ?? []).map((o) => o.id === outlineId ? { ...o, nodes: o.nodes.map((n) => n.id === nodeId ? { ...n, depth: Math.min((n.depth ?? 0) + 1, 4) } : n) } : o),
+    }));
+  }
+  function dedentOutlineNode(outlineId, nodeId) {
+    setState((c) => ({
+      ...c,
+      outlines: (c.outlines ?? []).map((o) => o.id === outlineId ? { ...o, nodes: o.nodes.map((n) => n.id === nodeId ? { ...n, depth: Math.max((n.depth ?? 0) - 1, 0) } : n) } : o),
+    }));
+  }
     const template = {
       id: `${state.activeSubject}-custom-${Date.now()}`,
       title: newTemplateTitle.trim(),
@@ -1064,20 +1255,25 @@ function App() {
     showToast("Backup exported");
   }
 
-  async function importBackup(event) {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
+  async function importBackup(eventOrData) {
     try {
-      const parsed = JSON.parse(await file.text());
+      let parsed;
+      
+      if (eventOrData && eventOrData.target && eventOrData.target.files) {
+        // File input event
+        const file = eventOrData.target.files[0];
+        if (!file) return;
+        parsed = JSON.parse(await file.text());
+        eventOrData.target.value = "";
+      } else {
+        // Direct data (from ProfilePage)
+        parsed = eventOrData;
+      }
+      
       setState(ensureExpandedState(hydrateState(parsed)));
       showToast("Backup imported");
     } catch {
       showToast("Import failed");
-    } finally {
-      event.target.value = "";
     }
   }
 
@@ -1124,6 +1320,42 @@ function App() {
       };
     });
     showToast(`Timer preset ${focusMinutes}/${breakMinutes} applied`);
+  }
+
+  function setCustomTimer(focusMinutes, breakMinutes) {
+    setState((current) => {
+      const subject = current.subjects[current.activeSubject];
+      return {
+        ...current,
+        subjects: {
+          ...current.subjects,
+          [current.activeSubject]: {
+            ...subject,
+            focusMinutes,
+            breakMinutes,
+          },
+        },
+        timer: {
+          ...current.timer,
+          mode: "focus",
+          secondsLeft: focusMinutes * 60,
+          isRunning: false,
+          lastTickAt: null,
+        },
+      };
+    });
+    showToast(`Custom timer ${focusMinutes}m/${breakMinutes}m set`);
+  }
+
+  function maximizeTimer() {
+    setShowFullscreenTimer(!showFullscreenTimer);
+  }
+
+  function updateUserProfile(updates) {
+    if (updateProfile) {
+      updateProfile(updates);
+    }
+    showToast("Profile updated");
   }
 
   function updateNote(value) {
@@ -1428,6 +1660,7 @@ function App() {
         newTemplateDifficulty={newTemplateDifficulty}
         revisionQueue={revisionQueue}
         onCompleteQuest={completeQuest}
+        onDeleteQuest={deleteQuest}
         onSetNewQuestTitle={setNewQuestTitle}
         onSetNewQuestDifficulty={setNewQuestDifficulty}
         onAddCustomQuest={addCustomQuest}
@@ -1448,6 +1681,8 @@ function App() {
         formatTime={formatTime}
         semesterDeadline={state.planner.semesterDeadline}
         onSetTimerPreset={setTimerPreset}
+        onSetCustomTimer={setCustomTimer}
+        onMaximizeTimer={maximizeTimer}
         onToggleTimer={toggleTimer}
         onResetTimer={resetTimer}
         onSaveGoal={saveGoal}
@@ -1458,7 +1693,6 @@ function App() {
         currentTheme={currentTheme}
         prestigeThemeChoices={prestigeThemeChoices}
         streak={state.streak}
-        noteText={state.notes[state.activeSubject] ?? ""}
         dailyQuote={dailyQuote}
         dailyTip={dailyTip}
         importFileRef={importFileRef}
@@ -1477,8 +1711,7 @@ function App() {
         battle={state.battle}
         onSetReflectionText={setReflectionText}
         onAddReflection={addReflection}
-        shopItems={SHOP_ITEMS}
-        onBuyShopItem={buyShopItem}
+        onDeleteReflection={deleteReflection}
         onApplyPrestige={applyPrestige}
         partyRoster={state.partyRoster}
         leaderboardPreview={leaderboardPreview}
@@ -1538,20 +1771,29 @@ function App() {
         newCardQuestion={newCardQuestion}
         newCardAnswer={newCardAnswer}
         newCardChoices={newCardChoices}
+        editingCardId={editingCardId}
+        studyFilter={studyFilter}
         onSetNewSetTitle={setNewSetTitle}
         onSetNewCardQuestion={setNewCardQuestion}
         onSetNewCardAnswer={setNewCardAnswer}
         onSetNewCardChoices={setNewCardChoices}
+        onSetEditingCardId={setEditingCardId}
+        onSetStudyFilter={setStudyFilter}
         onAddFlashcardSet={addFlashcardSet}
         onSelectSet={(setId) => setState((current) => ({ ...current, flashcards: { ...current.flashcards, activeSetId: setId } }))}
+        onDeleteSet={deleteFlashcardSet}
         onAddFlashcardCard={addFlashcardCard}
+        onDeleteCard={deleteFlashcardCard}
+        onUpdateCard={updateFlashcardCard}
         onStartFlashcardSession={startFlashcardSession}
+        onStartFiltered={startFlashcardSessionFiltered}
         onAnswerFlashcard={answerFlashcard}
         onAnswerOpenFlashcard={answerOpenFlashcard}
         onRateFlashcard={rateFlashcard}
         onNextFlashcard={nextFlashcard}
         onImportCards={importCards}
         onExportCards={exportCards}
+        onImportFromText={importCardsFromText}
       />
     );
   }
@@ -1564,6 +1806,7 @@ function App() {
         quizState={state.quiz}
         accuracy={accuracy}
         onStartQuizBattle={startQuizBattle}
+        onStartSpeedRun={startSpeedRun}
         onAnswerQuiz={answerQuiz}
         onAnswerOpenQuestion={answerOpenQuestion}
         onUseFiftyFifty={useFiftyFifty}
@@ -1612,7 +1855,63 @@ function App() {
     );
   }
 
+  function renderPracticeTest() {
+    return (
+      <PracticeTestPage
+        flashcardSets={state.flashcards.sets}
+        dayKey={state.dayKey}
+      />
+    );
+  }
+
+  function renderProgress() {
+    return (
+      <ProgressPage
+        state={state}
+        subjects={state.subjects}
+        flashcardSets={state.flashcards.sets}
+        quizState={state.quiz}
+        streak={state.streak}
+        sessionHistory={state.sessionHistory ?? []}
+      />
+    );
+  }
+
+  function renderPlanner() {
+    return (
+      <PlannerPage
+        planner={state.planner}
+        plannerCompletion={plannerCompletion}
+        plannerDraft={plannerDraft}
+        onSetPlannerDraft={setPlannerDraft}
+        onAddPlannerMission={addPlannerMission}
+        onToggleMissionStatus={toggleMissionStatus}
+        onDeletePlannerMission={deletePlannerMission}
+      />
+    );
+  }
+
+  function renderProfile() {
+    return (
+      <ProfilePage
+        userProfile={accountProfile}
+        onUpdateProfile={updateUserProfile}
+        onLogout={logout}
+        onExportBackup={exportBackup}
+        onImportBackup={importBackup}
+        importFileRef={importFileRef}
+        subjects={state.subjects}
+        state={state}
+      />
+    );
+  }
+
+  // eslint-disable-next-line no-unreachable
   function renderActiveView() {
+    if (state.ui.activeView === "profile") {
+      return renderProfile();
+    }
+
     if (state.ui.activeView === "party") {
       return renderParty();
     }
@@ -1639,6 +1938,18 @@ function App() {
 
     if (state.ui.activeView === "analytics") {
       return renderAnalytics();
+    }
+
+    if (state.ui.activeView === "practicetest") {
+      return renderPracticeTest();
+    }
+
+    if (state.ui.activeView === "progress") {
+      return renderProgress();
+    }
+
+    if (state.ui.activeView === "planner") {
+      return renderPlanner();
     }
 
     return renderDashboard();
@@ -1682,7 +1993,21 @@ function App() {
       <main
         className={`dashboard-shell feature-shell theme-${currentTheme} ${state.settings.highContrast ? "a11y-high-contrast" : ""} ${state.settings.largeText ? "a11y-large-text" : ""} ${state.settings.reducedMotion ? "a11y-reduced-motion" : ""}`}
         style={{ "--anim-scale": state.settings.reducedMotion ? 0.2 : 1, ...themeVars }}
-      ><Confetti active={showConfetti} />
+      >
+        <Confetti active={showConfetti} />
+        {showFullscreenTimer ? (
+          <Suspense fallback={null}>
+            <FullscreenTimer
+              timer={state.timer}
+              manaPercent={manaPercent}
+              formatTime={formatTime}
+              onToggleTimer={toggleTimer}
+              onResetTimer={resetTimer}
+              onClose={maximizeTimer}
+              activeSubject={activeSubject}
+            />
+          </Suspense>
+        ) : null}
         {rewardToast ? <div className="global-toast">{rewardToast}</div> : null}
         {!isOnline ? <div className="global-toast">You are offline. Changes will sync when connection returns.</div> : null}
         {queuedOffline ? <div className="global-toast">Cloud save queued. It will upload automatically once online.</div> : null}

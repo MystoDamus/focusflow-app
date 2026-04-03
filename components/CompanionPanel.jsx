@@ -14,7 +14,6 @@ function CompanionPanel({
   reflectionText,
   prestigeEligible,
   streak,
-  noteText,
   guild,
   onToggleSound,
   onToggleSettings,
@@ -26,9 +25,7 @@ function CompanionPanel({
   onImportBackup,
   onSetReflectionText,
   onAddReflection,
-  onUpdateNote,
-  shopItems,
-  onBuyShopItem,
+  onDeleteReflection,
   onApplyPrestige,
   compactMode = false,
   showSecondary = false,
@@ -123,29 +120,22 @@ function CompanionPanel({
         <div className="journal-list">
           {journalPreview.map((entry) => (
             <div key={entry.id} className="journal-item">
-              <strong>{entry.title}</strong>
-              <span>{entry.note}</span>
+              <div className="journal-item__body">
+                <strong>{entry.title}</strong>
+                <span>{entry.note}</span>
+              </div>
+              <button
+                type="button"
+                className="journal-item__delete"
+                onClick={() => onDeleteReflection(entry.id)}
+                title="Delete entry"
+              >
+                ×
+              </button>
             </div>
           ))}
         </div>
       </div>
-
-      {showSecondary ? (
-      <div className="shop-panel">
-        <div className="badge-header">
-          <span className="eyebrow">Guild Shop</span>
-          <span>{activeSubject.progress.shards} shards</span>
-        </div>
-        <div className="shop-grid">
-          {shopItems.map((item) => (
-            <button key={item.id} type="button" className="shop-item" onClick={() => onBuyShopItem(item)}>
-              <strong>{item.label}</strong>
-              <span>Cost: {item.cost}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-      ) : null}
 
       {showSecondary ? (
       <div className="streak-card">
@@ -180,19 +170,6 @@ function CompanionPanel({
         </div>
       </div>
       ) : null}
-
-      <div className="journal-card">
-        <div className="badge-header">
-          <span className="eyebrow">Study Notes</span>
-          <span>{activeSubject.name}</span>
-        </div>
-        <textarea
-          className="subject-notes-input"
-          value={noteText}
-          onChange={(event) => onUpdateNote(event.target.value)}
-          placeholder="Capture formulas, weak areas, or next practice targets..."
-        />
-      </div>
 
       <button type="button" className="ghost-button prestige-button" onClick={onApplyPrestige} disabled={!prestigeEligible}>
         <Trophy size={16} />

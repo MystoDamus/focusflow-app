@@ -1691,6 +1691,22 @@ button {
   color: var(--muted);
 }
 
+.list-item-with-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.list-item-with-action .list-item {
+  flex: 1;
+  margin: 0;
+}
+
+.list-item-with-action .icon-btn {
+  flex-shrink: 0;
+  padding: 6px;
+}
+
 .quiz-card {
   display: grid;
   gap: 10px;
@@ -4200,3 +4216,170 @@ button {
     font-size: 1.2rem;
   }
 }
+
+/* -----------------------------------------------------------
+   NEW STUDY FEATURES � appended
+   ----------------------------------------------------------- */
+
+/* -- Quest / Journal delete buttons ------------------------ */
+.quest-card-row { display: flex; align-items: center; gap: 6px; }
+.quest-delete-btn { border: none; background: none; color: rgba(255,80,80,.55); font-size: 1.1rem; cursor: pointer; padding: 4px 8px; border-radius: 8px; line-height: 1; }
+.quest-delete-btn:hover { background: rgba(255,80,80,.12); color: rgba(255,130,130,.9); }
+.journal-item { display: flex; align-items: flex-start; gap: 8px; }
+.journal-item__body { flex: 1; display: grid; gap: 2px; }
+.journal-item__delete { background: none; border: none; color: rgba(255,80,80,.45); cursor: pointer; font-size: .95rem; padding: 2px 6px; border-radius: 6px; line-height: 1; }
+.journal-item__delete:hover { background: rgba(255,80,80,.1); color: rgba(255,130,130,.9); }
+
+/* -- Shared icon buttons ------------------------------------ */
+.icon-btn { background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px; border-radius: 6px; display: flex; align-items: center; }
+.icon-btn:hover { color: var(--text); background: rgba(255,255,255,.08); }
+.icon-danger-btn { background: none; border: none; color: rgba(255,80,80,.6); cursor: pointer; padding: 4px; border-radius: 6px; display: flex; align-items: center; }
+.icon-danger-btn:hover { color: rgba(255,130,130,.9); background: rgba(255,80,80,.12); }
+
+/* -- Shared layout helpers ---------------------------------- */
+.feature-page { display: grid; gap: 20px; padding: 24px; }
+.feature-header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.feature-header h2 { flex: 1; font-size: 1.35rem; font-weight: 700; }
+.feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+.stack-form { display: grid; gap: 12px; }
+.stack-form label { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); }
+.stack-form input, .stack-form select, .stack-form textarea { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: .9rem; width: 100%; }
+.inline-form { display: flex; gap: 8px; }
+.inline-form input { flex: 1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 6px 10px; color: var(--text); font-size: .9rem; }
+.pill-inline { background: rgba(255,211,108,.15); color: var(--accent,#ffd36c); border-radius: 20px; padding: 3px 12px; font-size: .8rem; font-weight: 600; }
+.muted { color: var(--muted); font-size: .85rem; }
+.is-active-row .set-select-btn { color: var(--accent,#ffd36c); font-weight: 600; }
+.set-select-btn { background: none; border: none; color: var(--text); cursor: pointer; flex: 1; text-align: left; padding: 6px 4px; border-radius: 6px; font-size: .9rem; }
+.set-select-btn:hover { color: var(--accent,#ffd36c); }
+
+/* -- Stat cards --------------------------------------------- */
+.fc-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.stat-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 14px 12px; display: grid; gap: 4px; }
+.stat-card span { font-size: .75rem; color: var(--muted); }
+.stat-card strong { font-size: 1.3rem; }
+.stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.stat-grid div { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 12px; display: grid; gap: 3px; }
+.stat-grid span { font-size: .75rem; color: var(--muted); }
+.stat-grid strong { font-size: 1.1rem; }
+
+/* -- Flashcards 2-col layout ------------------------------- */
+.fc-layout { display: grid; grid-template-columns: 1fr 1.4fr; gap: 20px; }
+@media (max-width: 860px) { .fc-layout { grid-template-columns: 1fr; } }
+.fc-left { display: grid; gap: 16px; align-content: start; }
+.fc-right { display: grid; gap: 16px; align-content: start; }
+.fc-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+.fc-tab { border: 1px solid transparent; background: transparent; color: var(--muted); border-radius: 10px; padding: 6px 14px; cursor: pointer; font-size: .85rem; }
+.fc-tab.is-active { border-color: var(--accent,#ffd36c); color: var(--text); background: rgba(255,211,108,.1); }
+.fc-tab-panel { display: grid; gap: 10px; }
+.fc-set-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; }
+.fc-card-item { border: 1px solid rgba(255,255,255,.07); border-radius: 10px; padding: 10px 12px; display: flex; align-items: flex-start; gap: 10px; margin-bottom: 6px; background: rgba(255,255,255,.02); }
+.fc-card-body { flex: 1; display: grid; gap: 3px; }
+.fc-card-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.fc-card-meta { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+.fc-strength { font-size: .7rem; padding: 1px 6px; border-radius: 6px; background: rgba(255,255,255,.08); color: var(--muted); }
+.fc-card-edit { display: grid; gap: 6px; padding: 8px 0; }
+.fc-card-edit textarea { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 6px 10px; color: var(--text); font-size: .85rem; resize: vertical; min-height: 60px; width: 100%; }
+.fc-edit-actions { display: flex; gap: 6px; }
+.fc-filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.fc-empty-study { text-align: center; padding: 40px 0; color: var(--muted); display: grid; gap: 12px; justify-items: center; }
+.paste-import-panel { padding: 16px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; background: rgba(255,255,255,.02); display: grid; gap: 10px; }
+.paste-import-textarea { width: 100%; min-height: 110px; font-family: monospace; font-size: .82rem; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 8px; color: var(--text); resize: vertical; }
+
+/* -- Flashcard flip animation ------------------------------ */
+.fc-flashcard-wrapper { display: grid; gap: 16px; }
+.fc-flashcard { perspective: 1000px; height: 160px; cursor: pointer; position: relative; }
+.fc-flashcard__front,
+.fc-flashcard__back {
+  position: absolute; inset: 0;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 16px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 20px;
+  backface-visibility: hidden;
+  transition: transform 0.5s cubic-bezier(.4,0,.2,1);
+}
+.fc-flashcard__back { transform: rotateY(180deg); background: rgba(255,211,108,.08); border-color: rgba(255,211,108,.25); }
+.fc-flashcard.is-flipped .fc-flashcard__front { transform: rotateY(180deg); }
+.fc-flashcard.is-flipped .fc-flashcard__back { transform: rotateY(0deg); }
+.fc-question { font-size: 1.05rem; font-weight: 600; text-align: center; }
+.fc-answer { font-size: .95rem; text-align: center; color: rgba(255,211,108,.9); }
+.fc-flip-hint { font-size: .72rem; color: var(--muted); margin-top: 8px; }
+.fc-self-rate { display: flex; gap: 10px; justify-content: center; }
+.fc-study-panel { display: grid; gap: 14px; }
+.fc-study-header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fc-session-meta { font-size: .8rem; color: var(--muted); }
+.choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tf-buttons { display: flex; gap: 12px; justify-content: center; }
+.tf-btn { padding: 10px 28px; border-radius: 10px; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; }
+.tf-btn--true { background: rgba(86,215,127,.15); color: rgba(86,215,127,.95); border: 1px solid rgba(86,215,127,.3); }
+.tf-btn--true:hover { background: rgba(86,215,127,.28); }
+.tf-btn--false { background: rgba(255,80,80,.12); color: rgba(255,100,100,.95); border: 1px solid rgba(255,80,80,.25); }
+.tf-btn--false:hover { background: rgba(255,80,80,.25); }
+.open-answer-form { display: flex; gap: 8px; align-items: center; }
+.open-answer-input { flex: 1; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: .95rem; }
+
+/* -- Quiz: Speed Run --------------------------------------- */
+.quiz-speedrun-view { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 32px; padding: 40px; background: linear-gradient(135deg, rgba(0,0,0,.95), rgba(20,10,40,.98)); }
+.speedrun-header { display: flex; align-items: center; gap: 32px; flex-wrap: wrap; justify-content: center; }
+.speedrun-timer-ring { width: 100px; height: 100px; border-radius: 50%; border: 4px solid var(--accent,#ffd36c); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 0 24px rgba(255,211,108,.4); }
+.speedrun-timer-value { font-size: 2rem; font-weight: 800; color: var(--accent,#ffd36c); }
+.speedrun-stats { display: flex; gap: 24px; }
+.speedrun-stats div { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: .85rem; }
+.speedrun-stats strong { font-size: 1.3rem; }
+.speedrun-question-area { width: 100%; max-width: 700px; display: grid; gap: 20px; }
+.speedrun-question { font-size: 1.5rem; font-weight: 700; text-align: center; padding: 24px; background: rgba(255,255,255,.05); border-radius: 16px; }
+
+/* -- Quiz: Wrong Answer Review ----------------------------- */
+.wrong-review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.wrong-review-list { display: grid; gap: 12px; }
+.wrong-review-item { padding: 12px 16px; background: rgba(255,80,80,.06); border: 1px solid rgba(255,80,80,.18); border-radius: 12px; display: grid; gap: 4px; }
+.wrong-review-item--correct { background: rgba(86,215,127,.04); border-color: rgba(86,215,127,.15); }
+.wrong-review-q { font-weight: 600; font-size: .9rem; }
+.wrong-review-a { color: rgba(86,215,127,.9); font-size: .85rem; }
+.wrong-review-exp { color: rgba(255,211,108,.8); font-size: .82rem; font-style: italic; margin-top: 2px; }
+.quiz-mode-info { display: grid; gap: 10px; margin-top: 16px; }
+.quiz-mode-card { padding: 12px 16px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; display: grid; gap: 4px; }
+.quiz-mode-card h4 { font-size: .9rem; font-weight: 600; margin: 0; }
+.quiz-mode-card p { font-size: .8rem; color: var(--muted); margin: 0; }
+
+/* -- Practice Test ----------------------------------------- */
+.test-result-badge { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-radius: 14px; }
+.test-result-badge--pass { background: rgba(86,215,127,.1); border: 1px solid rgba(86,215,127,.3); color: rgba(86,215,127,.95); }
+.test-result-badge--fail { background: rgba(255,80,80,.08); border: 1px solid rgba(255,80,80,.25); color: rgba(255,100,100,.9); }
+.test-result-badge strong { font-size: 2rem; font-weight: 800; display: block; }
+.test-result-badge span { font-size: .8rem; opacity: .7; }
+
+/* -- Formulas / Cheat Sheets ------------------------------- */
+.formulas-layout { display: grid; grid-template-columns: 260px 1fr; gap: 20px; padding: 24px; }
+@media (max-width: 860px) { .formulas-layout { grid-template-columns: 1fr; } }
+.formulas-sidebar { display: grid; gap: 16px; align-content: start; }
+.formulas-main { display: grid; gap: 20px; align-content: start; }
+.formulas-sheet-header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
+.formulas-sheet-header h3 { flex: 1; font-size: 1.1rem; font-weight: 700; }
+.formula-section { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; overflow: hidden; }
+.formula-section__header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; cursor: pointer; user-select: none; }
+.formula-section__header:hover { background: rgba(255,255,255,.04); }
+.formula-section__header h4 { flex: 1; margin: 0; font-size: .9rem; font-weight: 600; }
+.formula-section__body { padding: 12px 16px; display: grid; gap: 8px; }
+.formula-item { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 10px; }
+.formula-item__view { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; }
+.formula-item__text { flex: 1; font-family: monospace; font-size: .88rem; white-space: pre-wrap; color: var(--text); margin: 0; line-height: 1.5; }
+.formula-item__actions { display: flex; gap: 4px; flex-shrink: 0; }
+.formula-item__edit { padding: 10px 12px; display: grid; gap: 6px; }
+.formula-item__edit textarea { width: 100%; min-height: 80px; font-family: monospace; font-size: .87rem; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); border-radius: 8px; padding: 7px 10px; color: var(--text); resize: vertical; }
+
+/* -- Outline Builder --------------------------------------- */
+.outline-node { margin-bottom: 4px; }
+.outline-node__row { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 8px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); }
+.outline-node__row:hover { background: rgba(255,255,255,.06); }
+.outline-node__input { flex: 1; background: rgba(255,255,255,.09); border: 1px solid rgba(255,211,108,.4); border-radius: 6px; padding: 4px 8px; color: var(--text); font-size: .9rem; }
+.outline-node__text { flex: 1; font-size: .9rem; cursor: text; padding: 2px 4px; }
+.outline-node__text--d0 { font-size: 1rem; font-weight: 700; }
+.outline-node__text--d1 { font-size: .92rem; font-weight: 600; color: var(--accent,#ffd36c); }
+.outline-node__text--d2 { font-size: .88rem; color: rgba(255,255,255,.8); }
+.outline-node__text--d3 { font-size: .84rem; color: var(--muted); font-style: italic; }
+.outline-node__actions { display: flex; gap: 2px; }
+
+/* -- Progress Page ----------------------------------------- */
+/* (reuses feature-page, feature-grid, feature-header, fc-stats-grid, stat-card, wrong-review-list) */

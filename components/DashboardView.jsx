@@ -21,6 +21,7 @@ function DashboardView({
   newTemplateDifficulty,
   revisionQueue,
   onCompleteQuest,
+  onDeleteQuest,
   onSetNewQuestTitle,
   onSetNewQuestDifficulty,
   onAddCustomQuest,
@@ -46,6 +47,8 @@ function DashboardView({
   onSetGoalSessions,
   semesterDeadline,
   onSetTimerPreset,
+  onMaximizeTimer,
+  onSetCustomTimer,
   petCelebrating,
   showSettings,
   currentTheme,
@@ -56,7 +59,6 @@ function DashboardView({
   reflectionText,
   prestigeEligible,
   streak,
-  noteText,
   dailyQuote,
   dailyTip,
   onToggleSound,
@@ -68,9 +70,7 @@ function DashboardView({
   onImportBackup,
   onSetReflectionText,
   onAddReflection,
-  onUpdateNote,
-  shopItems,
-  onBuyShopItem,
+  onDeleteReflection,
   onApplyPrestige,
   battle,
   partyRoster,
@@ -248,6 +248,7 @@ function DashboardView({
             ambientEnabled={state.settings.ambientEnabled}
             ambientMode={state.settings.ambientMode}
             onCompleteQuest={onCompleteQuest}
+            onDeleteQuest={onDeleteQuest}
             onSetNewQuestTitle={onSetNewQuestTitle}
             onSetNewQuestDifficulty={onSetNewQuestDifficulty}
             onAddCustomQuest={onAddCustomQuest}
@@ -349,16 +350,9 @@ function DashboardView({
             onSetGoalSessions={onSetGoalSessions}
             semesterDeadline={semesterDeadline}
             onSetTimerPreset={onSetTimerPreset}
+            onMaximizeTimer={onMaximizeTimer}
+            onSetCustomTimer={onSetCustomTimer}
           />
-
-          <section className="panel dashboard-quick-actions" data-tutorial="quick-actions">
-            <h3>Study Flow</h3>
-            <p className="muted">Use these primary actions for your daily cycle.</p>
-            <div className="dashboard-action-row">
-              <button type="button" className="ghost-button" onClick={onOpenFlashcards}>Travel Drill (Flashcards)</button>
-              <button type="button" className="ghost-button" onClick={onOpenQuiz}>Boss Quiz Battle</button>
-            </div>
-          </section>
 
           <CompanionPanel
             activeSubject={activeSubject}
@@ -373,7 +367,6 @@ function DashboardView({
             reflectionText={reflectionText}
             prestigeEligible={prestigeEligible}
             streak={streak}
-            noteText={noteText}
             guild={state.guild}
             onToggleSound={onToggleSound}
             onToggleSettings={onToggleSettings}
@@ -385,9 +378,7 @@ function DashboardView({
             onImportBackup={onImportBackup}
             onSetReflectionText={onSetReflectionText}
             onAddReflection={onAddReflection}
-            onUpdateNote={onUpdateNote}
-            shopItems={shopItems}
-            onBuyShopItem={onBuyShopItem}
+            onDeleteReflection={onDeleteReflection}
             onApplyPrestige={onApplyPrestige}
             compactMode={todayMode}
             showSecondary={showSecondary}

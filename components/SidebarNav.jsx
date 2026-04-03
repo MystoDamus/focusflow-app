@@ -6,7 +6,9 @@ import {
   ChevronRight,
   Cloud,
   CloudOff,
+  ClipboardCheck,
   LayoutDashboard,
+  LayoutList,
   LogOut,
   Palette,
   RefreshCw,
@@ -14,6 +16,7 @@ import {
   Shield,
   Sparkles,
   Star,
+  TrendingUp,
   User,
 } from "lucide-react";
 
@@ -21,10 +24,14 @@ const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "flashcards", label: "Flashcards", icon: BookText },
   { id: "quiz", label: "Quiz Battle", icon: Brain },
+  { id: "practicetest", label: "Practice Test", icon: ClipboardCheck },
+  { id: "planner", label: "Study Planner", icon: LayoutList },
+  { id: "progress", label: "Progress", icon: TrendingUp },
   { id: "party", label: "Party", icon: Shield },
   { id: "achievements", label: "Achievements", icon: Star },
   { id: "shop", label: "Shop", icon: ShoppingBag },
   { id: "customize", label: "Avatar Lab", icon: User },
+  { id: "profile", label: "Profile", icon: Sparkles },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
 ];
 

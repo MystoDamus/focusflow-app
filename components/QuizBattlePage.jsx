@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 
 function QuizBattlePage({
   quizSession,
@@ -6,6 +6,7 @@ function QuizBattlePage({
   quizState,
   accuracy,
   onStartQuizBattle,
+  onStartSpeedRun,
   onAnswerQuiz,
   onAnswerOpenQuestion,
   onUseFiftyFifty,
@@ -26,6 +27,8 @@ function QuizBattlePage({
   const [draftAnswer, setDraftAnswer] = useState("");
   const [draftChoices, setDraftChoices] = useState("");
   const [draftType, setDraftType] = useState("mcq");
+  const [draftExplanation, setDraftExplanation] = useState("");
+  const [showWrongReview, setShowWrongReview] = useState(false);
   const qType = quizQuestion?.type ?? "mcq";
 
   function handleOpenSubmit(event) {
@@ -51,10 +54,56 @@ function QuizBattlePage({
       answer: draftAnswer,
       type: draftType,
       choices: draftType === "mcq" ? draftChoices.split("|") : [],
+      explanation: draftExplanation,
     });
     setDraftQuestion("");
     setDraftAnswer("");
     setDraftChoices("");
+    setDraftExplanation("");
+  }
+
+  // Speed Run view
+  if (quizSession?.isActive && quizSession.battleMode === "speedrun" && quizQuestion) {
+    return (
+      <div className="quiz-speedrun-view">
+        <div className="speedrun-header">
+          <div className="speedrun-timer-ring">
+            <span className="speedrun-timer-value">{quizSession.timeLeft}</span>
+            <span className="speedrun-timer-label">sec left</span>
+          </div>
+          <div className="speedrun-stats">
+            <div><span>Score</span><strong>{quizSession.score}</strong></div>
+            <div><span>Streak</span><strong>{quizSession.streak}</strong></div>
+            <div><span>Q</span><strong>{quizSession.index + 1}/{quizSession.questions.length}</strong></div>
+          </div>
+        </div>
+
+        <div className="speedrun-question-area">
+          <p className="speedrun-question">{quizQuestion.question}</p>
+          {qType === "true-false" && (
+            <div className="tf-buttons-battle">
+              <button type="button" className="tf-btn-battle tf-btn--true" onClick={() => onAnswerQuiz("True")}>True</button>
+              <button type="button" className="tf-btn-battle tf-btn--false" onClick={() => onAnswerQuiz("False")}>False</button>
+            </div>
+          )}
+          {qType === "identification" && (
+            <form className="open-answer-form-battle" onSubmit={handleOpenSubmit}>
+              <input className="open-answer-input-battle" value={openAnswer} onChange={(e) => setOpenAnswer(e.target.value)} placeholder="Type your answer..." autoFocus />
+              <button type="submit" className="accent-button">Submit</button>
+            </form>
+          )}
+          {(qType === "mcq" || !qType) && (
+            <div className="choice-grid-battle">
+              {quizQuestion.choices.map((choice) => (
+                <button key={choice} type="button" className="choice-btn-battle" onClick={() => onAnswerQuiz(choice)}>
+                  {choice}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
   }
 
   // Render full-screen battle view when active
@@ -73,10 +122,7 @@ function QuizBattlePage({
           {/* Boss Side */}
           <div className="battle-side battle-side--boss">
             <div className="boss-arena">
-              <div 
-                className={`boss-sprite-battle ${quizSession.bossHp <= 0 ? "boss-dead" : ""}`}
-                style={{ fontSize: "4rem" }}
-              >
+              <div className={`boss-sprite-battle ${quizSession.bossHp <= 0 ? "boss-dead" : ""}`} style={{ fontSize: "4rem" }}>
                 👹
               </div>
               <div className="boss-info">
@@ -84,25 +130,18 @@ function QuizBattlePage({
                 <div className="arena-hp-bar">
                   <div
                     className={`arena-hp-fill ${
-                      (quizSession.bossHp / quizSession.maxBossHp) > 0.5
-                        ? "arena-hp-healthy"
-                        : (quizSession.bossHp / quizSession.maxBossHp) > 0.2
-                          ? "arena-hp-wounded"
-                          : "arena-hp-critical"
+                      (quizSession.bossHp / quizSession.maxBossHp) > 0.5 ? "arena-hp-healthy"
+                      : (quizSession.bossHp / quizSession.maxBossHp) > 0.2 ? "arena-hp-wounded"
+                      : "arena-hp-critical"
                     }`}
-                    style={{
-                      width: `${(quizSession.bossHp / quizSession.maxBossHp) * 100}%`,
-                    }}
+                    style={{ width: `${(quizSession.bossHp / quizSession.maxBossHp) * 100}%` }}
                   />
                 </div>
-                <p className="arena-hp-text">
-                  {quizSession.bossHp}/{quizSession.maxBossHp}
-                </p>
+                <p className="arena-hp-text">{quizSession.bossHp}/{quizSession.maxBossHp}</p>
               </div>
             </div>
           </div>
 
-          {/* VS Indicator */}
           <div className="battle-vs-container">
             <div className="battle-vs-text">VS</div>
           </div>
@@ -113,9 +152,7 @@ function QuizBattlePage({
               <div className="party-roster-battle">
                 {(partyRoster ?? []).slice(0, 3).map((member, index) => (
                   <div key={`${member.id}-${index}`} className="party-member-battle">
-                    <div className="member-sprite-battle">
-                      {member.emoji ?? "⚔️"}
-                    </div>
+                    <div className="member-sprite-battle">{member.emoji ?? "⚔️"}</div>
                     <p className="member-name-battle">{member.displayName?.slice(0, 8) ?? "Member"}</p>
                   </div>
                 ))}
@@ -123,16 +160,9 @@ function QuizBattlePage({
               <div className="party-health-battle">
                 <h4>Party HP</h4>
                 <div className="arena-hp-bar">
-                  <div
-                    className="arena-hp-fill arena-hp-healthy"
-                    style={{
-                      width: `${(quizSession.partyHp / quizSession.maxPartyHp) * 100}%`,
-                    }}
-                  />
+                  <div className="arena-hp-fill arena-hp-healthy" style={{ width: `${(quizSession.partyHp / quizSession.maxPartyHp) * 100}%` }} />
                 </div>
-                <p className="arena-hp-text">
-                  {quizSession.partyHp}/{quizSession.maxPartyHp}
-                </p>
+                <p className="arena-hp-text">{quizSession.partyHp}/{quizSession.maxPartyHp}</p>
               </div>
             </div>
           </div>
@@ -141,15 +171,9 @@ function QuizBattlePage({
         {/* Question Area */}
         <div className="battle-question-container">
           <div className="battle-question-header">
-            <span className="battle-progress">
-              Q{quizSession.index + 1}/{quizSession.questions.length}
-            </span>
+            <span className="battle-progress">Q{quizSession.index + 1}/{quizSession.questions.length}</span>
             <span className={`battle-type-badge battle-type-badge--${qType}`}>
-              {qType === "identification"
-                ? "Identification"
-                : qType === "true-false"
-                  ? "True / False"
-                  : "Multiple Choice"}
+              {qType === "identification" ? "Identification" : qType === "true-false" ? "True / False" : "Multiple Choice"}
             </span>
             <span className="battle-timer">⏱️ {quizSession.timeLeft}s</span>
           </div>
@@ -159,48 +183,20 @@ function QuizBattlePage({
           <div className="battle-options-container">
             {qType === "true-false" && (
               <div className="tf-buttons-battle">
-                <button
-                  type="button"
-                  className="tf-btn-battle tf-btn--true"
-                  onClick={() => onAnswerQuiz("True")}
-                >
-                  True
-                </button>
-                <button
-                  type="button"
-                  className="tf-btn-battle tf-btn--false"
-                  onClick={() => onAnswerQuiz("False")}
-                >
-                  False
-                </button>
+                <button type="button" className="tf-btn-battle tf-btn--true" onClick={() => onAnswerQuiz("True")}>True</button>
+                <button type="button" className="tf-btn-battle tf-btn--false" onClick={() => onAnswerQuiz("False")}>False</button>
               </div>
             )}
-
             {qType === "identification" && (
               <form className="open-answer-form-battle" onSubmit={handleOpenSubmit}>
-                <input
-                  className="open-answer-input-battle"
-                  value={openAnswer}
-                  onChange={(e) => setOpenAnswer(e.target.value)}
-                  placeholder="Type your answer and press Enter"
-                  autoFocus
-                />
-                <button type="submit" className="accent-button">
-                  Submit
-                </button>
+                <input className="open-answer-input-battle" value={openAnswer} onChange={(e) => setOpenAnswer(e.target.value)} placeholder="Type your answer and press Enter" autoFocus />
+                <button type="submit" className="accent-button">Submit</button>
               </form>
             )}
-
             {(qType === "mcq" || !qType) && (
               <div className="choice-grid-battle">
-                {quizQuestion.choices.map((choice, index) => (
-                  <button
-                    key={choice}
-                    type="button"
-                    className="choice-btn-battle"
-                    onClick={() => onAnswerQuiz(choice)}
-                    disabled={quizSession.hiddenChoices.includes(choice)}
-                  >
+                {quizQuestion.choices.map((choice) => (
+                  <button key={choice} type="button" className="choice-btn-battle" onClick={() => onAnswerQuiz(choice)} disabled={quizSession.hiddenChoices.includes(choice)}>
                     {quizSession.hiddenChoices.includes(choice) ? "-" : choice}
                   </button>
                 ))}
@@ -208,68 +204,78 @@ function QuizBattlePage({
             )}
           </div>
 
-          {/* Powerups and Stats */}
+          {/* Explanation hint (shown in bottom bar if available but session still active) */}
           <div className="battle-bottom-bar">
             <div className="battle-powerups">
-              <button
-                type="button"
-                className="powerup-btn"
-                disabled={!quizSession.fiftyFifty || qType !== "mcq"}
-                onClick={onUseFiftyFifty}
-                title="50-50"
-              >
-                50-50
-              </button>
-              <button
-                type="button"
-                className="powerup-btn"
-                disabled={!quizSession.extraTime}
-                onClick={onUseExtraTime}
-                title="Extra Time"
-              >
-                +10s
-              </button>
-              <button
-                type="button"
-                className="powerup-btn"
-                onClick={onUseDefend}
-                title="Defend"
-              >
-                🛡️
-              </button>
-              <button
-                type="button"
-                className="powerup-btn"
-                disabled={!quizSession.hasHealer}
-                onClick={onUseHeal}
-                title="Heal"
-              >
-                ❤️
-              </button>
-              <button
-                type="button"
-                className="powerup-btn"
-                disabled={quizSession.potions <= 0}
-                onClick={onUsePotion}
-                title="Potion"
-              >
-                🧪 {quizSession.potions}
-              </button>
+              <button type="button" className="powerup-btn" disabled={!quizSession.fiftyFifty || qType !== "mcq"} onClick={onUseFiftyFifty} title="50-50">50-50</button>
+              <button type="button" className="powerup-btn" disabled={!quizSession.extraTime} onClick={onUseExtraTime} title="Extra Time">+10s</button>
+              <button type="button" className="powerup-btn" onClick={onUseDefend} title="Defend">🛡️</button>
+              <button type="button" className="powerup-btn" disabled={!quizSession.hasHealer} onClick={onUseHeal} title="Heal">❤️</button>
+              <button type="button" className="powerup-btn" disabled={quizSession.potions <= 0} onClick={onUsePotion} title="Potion">🧪 {quizSession.potions}</button>
             </div>
-
             <div className="battle-stats">
-              <div className="stat-item">
-                <span>Score</span>
-                <strong>{quizSession.score}</strong>
-              </div>
-              <div className="stat-item">
-                <span>Streak</span>
-                <strong>{quizSession.streak}</strong>
-              </div>
+              <div className="stat-item"><span>Score</span><strong>{quizSession.score}</strong></div>
+              <div className="stat-item"><span>Streak</span><strong>{quizSession.streak}</strong></div>
             </div>
           </div>
         </div>
       </div>
+    );
+  }
+
+  // After battle: show result + wrong answer review
+  if (quizSession && !quizSession.isActive && quizSession.result) {
+    const wrongAnswers = quizSession.wrongAnswers ?? [];
+    return (
+      <section className="feature-page">
+        <div className="feature-header">
+          <h2>
+            {quizSession.result === "victory" ? "⚔️ Victory!" :
+             quizSession.result === "defeat" ? "💀 Defeat" :
+             quizSession.result === "speedrun-done" ? "⚡ Speed Run Complete" :
+             "⏱️ Time's Up"}
+          </h2>
+          <div className="flashcard-actions">
+            <button type="button" className="accent-button" onClick={() => onStartQuizBattle("flashcards")}>Play Again</button>
+            {quizSession.battleMode === "speedrun" && (
+              <button type="button" className="ghost-button" onClick={() => onStartSpeedRun("flashcards")}>Speed Run Again</button>
+            )}
+          </div>
+        </div>
+        <div className="feature-grid">
+          <article className="panel">
+            <h3>Results</h3>
+            <div className="stat-grid">
+              <div><span>Score</span><strong>{quizSession.score}</strong></div>
+              <div><span>Streak</span><strong>{quizSession.streak}</strong></div>
+              <div><span>Best Score</span><strong>{quizState.bestScore}</strong></div>
+              <div><span>Accuracy</span><strong>{accuracy}%</strong></div>
+            </div>
+          </article>
+
+          {wrongAnswers.length > 0 && (
+            <article className="panel">
+              <div className="wrong-review-header">
+                <h3>Mistakes to Review ({wrongAnswers.length})</h3>
+                <button type="button" className="ghost-button" onClick={() => setShowWrongReview((v) => !v)}>
+                  {showWrongReview ? "Hide" : "Show"}
+                </button>
+              </div>
+              {showWrongReview && (
+                <div className="wrong-review-list">
+                  {wrongAnswers.map((item, i) => (
+                    <div key={i} className="wrong-review-item">
+                      <p className="wrong-review-q">Q: {item.question}</p>
+                      <p className="wrong-review-a">✓ {item.correctAnswer}</p>
+                      {item.explanation && <p className="wrong-review-exp">💡 {item.explanation}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </article>
+          )}
+        </div>
+      </section>
     );
   }
 
@@ -280,7 +286,10 @@ function QuizBattlePage({
         <h2>Quiz Battle</h2>
         <div className="flashcard-actions">
           <button type="button" className="accent-button" onClick={() => onStartQuizBattle("flashcards")}>
-            Start Solo Boss Battle (Flashcards)
+            Start Boss Battle
+          </button>
+          <button type="button" className="ghost-button" onClick={() => onStartSpeedRun("flashcards")}>
+            ⚡ Speed Run (60s)
           </button>
           <button
             type="button"
@@ -288,10 +297,10 @@ function QuizBattlePage({
             disabled={!activeCustomSet || activeCustomSet.cards.length < 2}
             onClick={() => onStartQuizBattle("custom", activeCustomSet?.id)}
           >
-            Start Solo Boss Battle (Custom Quiz)
+            Custom Quiz Battle
           </button>
           <button type="button" className="ghost-button" onClick={() => onStartQuizBattle("flashcards", null, "versus")}>
-            Start Party Versus Battle
+            Party Versus
           </button>
         </div>
       </div>
@@ -300,11 +309,7 @@ function QuizBattlePage({
         <article className="panel">
           <h3>Create a Dedicated Quiz</h3>
           <form className="stack-form" onSubmit={handleCreateSet}>
-            <input
-              value={newSetTitle}
-              onChange={(event) => setNewSetTitle(event.target.value)}
-              placeholder="Quiz set title"
-            />
+            <input value={newSetTitle} onChange={(event) => setNewSetTitle(event.target.value)} placeholder="Quiz set title" />
             <button type="submit" className="ghost-button">Create Quiz Set</button>
           </form>
 
@@ -320,7 +325,7 @@ function QuizBattlePage({
                 <span>{setEntry.cards.length} questions</span>
               </button>
             ))}
-            {!(customQuizSets ?? []).length ? <p className="muted">No custom quiz set yet.</p> : null}
+            {!(customQuizSets ?? []).length && <p className="muted">No custom quiz set yet.</p>}
           </div>
 
           <form className="stack-form" onSubmit={handleAddQuestion}>
@@ -329,42 +334,74 @@ function QuizBattlePage({
               <option value="true-false">True / False</option>
               <option value="identification">Identification</option>
             </select>
-            <input
-              value={draftQuestion}
-              onChange={(event) => setDraftQuestion(event.target.value)}
-              placeholder="Question"
-            />
-            <input
-              value={draftAnswer}
-              onChange={(event) => setDraftAnswer(event.target.value)}
-              placeholder="Correct answer"
-            />
-            {draftType === "mcq" ? (
-              <input
-                value={draftChoices}
-                onChange={(event) => setDraftChoices(event.target.value)}
-                placeholder="Other choices separated by |"
-              />
-            ) : null}
-            <button type="submit" className="ghost-button" disabled={!activeCustomSet}>
-              Add Question
-            </button>
+            <input value={draftQuestion} onChange={(event) => setDraftQuestion(event.target.value)} placeholder="Question" />
+            <input value={draftAnswer} onChange={(event) => setDraftAnswer(event.target.value)} placeholder="Correct answer" />
+            {draftType === "mcq" && (
+              <input value={draftChoices} onChange={(event) => setDraftChoices(event.target.value)} placeholder="Other choices separated by |" />
+            )}
+            <input value={draftExplanation} onChange={(event) => setDraftExplanation(event.target.value)} placeholder="Explanation (optional - shown after wrong answer)" />
+            <button type="submit" className="ghost-button" disabled={!activeCustomSet}>Add Question</button>
           </form>
-          <p className="muted">
-            Custom quizzes are separate from flashcards, but you can still launch a quiz using flashcards.
-          </p>
+          <p className="muted">Custom quizzes are separate from flashcards.</p>
         </article>
 
         <article className="panel">
-          <h3>{quizSession?.result === "victory" ? "Victory" : quizSession?.result === "defeat" ? "Defeat" : "Arena Idle"}</h3>
-          <p>
-            Solo battles now include boss health and party health. Correct answers damage the boss.
-            Wrong answers damage your party. Use Defend, Heal, and Potions to survive. You can also launch Party Versus battles.
-          </p>
+          <h3>Arena Stats</h3>
+          <p className="muted">Solo battles scale boss HP based on your accuracy. Higher accuracy = tougher boss.</p>
           <div className="stat-grid">
             <div><span>Best Score</span><strong>{quizState.bestScore}</strong></div>
             <div><span>Accuracy</span><strong>{accuracy}%</strong></div>
             <div><span>Total Answered</span><strong>{quizState.totalAnswered}</strong></div>
+          </div>
+
+          {/* Competitive Solo Section */}
+          <article className="panel" style={{ marginTop: "20px", background: "linear-gradient(135deg, rgba(255, 211, 108, 0.1), rgba(99, 199, 255, 0.1))", borderColor: "rgba(255, 211, 108, 0.3)" }}>
+            <h3 style={{ color: "#ffd36c" }}>🏆 Competitive Solo Challenges</h3>
+            <p className="muted">Beat your personal records and climb the ranks.</p>
+            <div className="stat-grid" style={{ marginBottom: "16px" }}>
+              <div><span>Current Streak</span><strong style={{ color: "#63c7ff" }}>—</strong></div>
+              <div><span>Best Streak</span><strong style={{ color: "#ffe7a6" }}>—</strong></div>
+              <div><span>Accuracy Record</span><strong style={{ color: "#56d77f" }}>—</strong></div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <button
+                type="button"
+                className="ghost-button"
+                onClick={() => onStartQuizBattle("flashcards")}
+                title="Timed challenge: Answer as many questions correctly as possible before accuracy drops"
+                style={{ minHeight: "50px", fontSize: "0.95rem" }}
+              >
+                ⏱️ Accuracy Challenge
+              </button>
+              <button
+                type="button"
+                className="ghost-button"
+                onClick={() => onStartSpeedRun("flashcards")}
+                title="60-second speed round with unlimited questions"
+                style={{ minHeight: "50px", fontSize: "0.95rem" }}
+              >
+                ⚡ Speed Challenge
+              </button>
+            </div>
+          </article>
+
+          <div className="quiz-mode-info">
+            <div className="quiz-mode-card">
+              <strong>⚔️ Boss Battle</strong>
+              <span>10 questions, boss HP scales with your skill. Powerups available.</span>
+            </div>
+            <div className="quiz-mode-card">
+              <strong>⚡ Speed Run</strong>
+              <span>60 seconds, unlimited questions, answer as fast as you can.</span>
+            </div>
+            <div className="quiz-mode-card">
+              <strong>👥 Party Versus</strong>
+              <span>Fight alongside your party roster with enhanced abilities.</span>
+            </div>
+            <div className="quiz-mode-card">
+              <strong>🏆 Competitive Solo</strong>
+              <span>Personal records, streaks, and ranked challenges. No powerups allowed.</span>
+            </div>
           </div>
         </article>
       </div>

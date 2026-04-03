@@ -1,0 +1,275 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Deploy to Vercel (prod)",
+			"type": "shell",
+			"command": "\"C:\\Program Files\\nodejs\\node.exe\" \"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\" deploy --prod --yes",
+			"isBackground": false
+		},
+		{
+			"label": "Deploy to Vercel (prod)",
+			"type": "shell",
+			"command": "& \"C:\\Program Files\\nodejs\\node.exe\" \"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\" deploy --prod --yes",
+			"isBackground": false
+		},
+		{
+			"label": "Deploy to Vercel (prod via cmd)",
+			"type": "shell",
+			"command": "cmd /c \"\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" deploy --prod --yes\"",
+			"isBackground": false
+		},
+		{
+			"label": "List Vercel env vars",
+			"type": "shell",
+			"command": "cmd /c \"\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" env ls\"",
+			"isBackground": false
+		},
+		{
+			"label": "Set Vercel Supabase env vars",
+			"type": "shell",
+			"command": "cmd /c \"(echo https://maxhhdhuzampkviohmjm.supabase.co)|\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" env add VITE_SUPABASE_URL production && (echo https://maxhhdhuzampkviohmjm.supabase.co)|\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" env add VITE_SUPABASE_URL preview && (echo https://maxhhdhuzampkviohmjm.supabase.co)|\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" env add VITE_SUPABASE_URL development && (echo sb_publishable_L6AUCfqGMgqVwecDZLZM1A_p6BpppG3)|\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" env add VITE_SUPABASE_ANON_KEY production && (echo sb_publishable_L6AUCfqGMgqVwecDZLZM1A_p6BpppG3)|\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" env add VITE_SUPABASE_ANON_KEY preview && (echo sb_publishable_L6AUCfqGMgqVwecDZLZM1A_p6BpppG3)|\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" env add VITE_SUPABASE_ANON_KEY development\"",
+			"isBackground": false
+		},
+		{
+			"label": "Verify Vercel env vars",
+			"type": "shell",
+			"command": "cmd /c \"\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" env ls\"",
+			"isBackground": false
+		},
+		{
+			"label": "Set one env var (prod URL)",
+			"type": "shell",
+			"command": "cmd /v:on /c \"echo https://maxhhdhuzampkviohmjm.supabase.co|\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" env add VITE_SUPABASE_URL production\"",
+			"isBackground": false
+		},
+		{
+			"label": "Set one env var via powershell",
+			"type": "shell",
+			"command": "$node='C:\\Program Files\\nodejs\\node.exe'; $vercel='C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js'; 'https://maxhhdhuzampkviohmjm.supabase.co' | & $node $vercel env add VITE_SUPABASE_URL production",
+			"isBackground": false
+		},
+		{
+			"label": "Set remaining Supabase env vars",
+			"type": "shell",
+			"command": "$node='C:\\Program Files\\nodejs\\node.exe'; $vercel='C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js'; $url='https://maxhhdhuzampkviohmjm.supabase.co'; $key='sb_publishable_L6AUCfqGMgqVwecDZLZM1A_p6BpppG3'; $url | & $node $vercel env add VITE_SUPABASE_URL preview; $url | & $node $vercel env add VITE_SUPABASE_URL development; $key | & $node $vercel env add VITE_SUPABASE_ANON_KEY production; $key | & $node $vercel env add VITE_SUPABASE_ANON_KEY preview; $key | & $node $vercel env add VITE_SUPABASE_ANON_KEY development",
+			"isBackground": false
+		},
+		{
+			"label": "Verify env vars configured",
+			"type": "shell",
+			"command": "& \"C:\\Program Files\\nodejs\\node.exe\" \"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\" env ls",
+			"isBackground": false
+		},
+		{
+			"label": "Verify env vars configured",
+			"type": "shell",
+			"command": "$node='C:\\Program Files\\nodejs\\node.exe'; $vercel='C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js'; & $node $vercel env ls",
+			"isBackground": false
+		},
+		{
+			"label": "Verify env vars configured 2",
+			"type": "shell",
+			"command": "cmd /c \"\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" env ls\"",
+			"isBackground": false
+		},
+		{
+			"label": "Set preview env vars (main branch)",
+			"type": "shell",
+			"command": "$node='C:\\Program Files\\nodejs\\node.exe'; $vercel='C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js'; $url='https://maxhhdhuzampkviohmjm.supabase.co'; $key='sb_publishable_L6AUCfqGMgqVwecDZLZM1A_p6BpppG3'; $url | & $node $vercel env add VITE_SUPABASE_URL preview --git-branch main; $key | & $node $vercel env add VITE_SUPABASE_ANON_KEY preview --git-branch main",
+			"isBackground": false
+		},
+		{
+			"label": "Set preview env vars (all preview branches)",
+			"type": "shell",
+			"command": "$node='C:\\Program Files\\nodejs\\node.exe'; $vercel='C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js'; \"https://maxhhdhuzampkviohmjm.supabase.co`n`n\" | & $node $vercel env add VITE_SUPABASE_URL preview; \"sb_publishable_L6AUCfqGMgqVwecDZLZM1A_p6BpppG3`n`n\" | & $node $vercel env add VITE_SUPABASE_ANON_KEY preview",
+			"isBackground": false
+		},
+		{
+			"label": "Redeploy with env vars",
+			"type": "shell",
+			"command": "cmd /c \"\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" deploy --prod --yes\"",
+			"isBackground": false
+		},
+		{
+			"label": "Set preview Supabase URL",
+			"type": "shell",
+			"command": "cmd /c \"(echo https://maxhhdhuzampkviohmjm.supabase.co& echo.) | \\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" env add VITE_SUPABASE_URL preview\"",
+			"isBackground": false
+		},
+		{
+			"label": "Set preview Supabase URL",
+			"type": "shell",
+			"command": "$node='C:\\Program Files\\nodejs\\node.exe'; $vercel='C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js'; $tmp=New-TemporaryFile; @('https://maxhhdhuzampkviohmjm.supabase.co','') | Set-Content -Path $tmp; Get-Content $tmp | & $node $vercel env add VITE_SUPABASE_URL preview; Remove-Item $tmp -Force",
+			"isBackground": false
+		},
+		{
+			"label": "Set preview Supabase URL v2",
+			"type": "shell",
+			"command": "$node='C:\\Program Files\\nodejs\\node.exe'; $vercel='C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js'; $tmp=New-TemporaryFile; @('https://maxhhdhuzampkviohmjm.supabase.co','') | Set-Content -Path $tmp; Get-Content $tmp | & $node $vercel env add VITE_SUPABASE_URL preview; Remove-Item $tmp -Force",
+			"isBackground": false
+		},
+		{
+			"label": "Check Vercel env coverage",
+			"type": "shell",
+			"command": "cmd /c \"\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" env ls\"",
+			"isBackground": false
+		},
+		{
+			"label": "Set Preview Supabase URL",
+			"type": "shell",
+			"command": "$node='C:\\Program Files\\nodejs\\node.exe'; $vercel='C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js'; $tmp=New-TemporaryFile; @('https://maxhhdhuzampkviohmjm.supabase.co','') | Set-Content -Path $tmp; Get-Content $tmp | & $node $vercel env add VITE_SUPABASE_URL preview; Remove-Item $tmp -Force",
+			"isBackground": false
+		},
+		{
+			"label": "Set Preview vars for main branch",
+			"type": "shell",
+			"command": "$node='C:\\Program Files\\nodejs\\node.exe'; $vercel='C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js'; $tmp1=New-TemporaryFile; @('https://maxhhdhuzampkviohmjm.supabase.co') | Set-Content -Path $tmp1; Get-Content $tmp1 | & $node $vercel env add VITE_SUPABASE_URL preview main; Remove-Item $tmp1 -Force; $tmp2=New-TemporaryFile; @('sb_publishable_L6AUCfqGMgqVwecDZLZM1A_p6BpppG3') | Set-Content -Path $tmp2; Get-Content $tmp2 | & $node $vercel env add VITE_SUPABASE_ANON_KEY preview main; Remove-Item $tmp2 -Force",
+			"isBackground": false
+		},
+		{
+			"label": "Set Preview URL all branches",
+			"type": "shell",
+			"command": "$node='C:\\Program Files\\nodejs\\node.exe'; $vercel='C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js'; @\"\nhttps://maxhhdhuzampkviohmjm.supabase.co\n\n\"@ | & $node $vercel env add VITE_SUPABASE_URL preview",
+			"isBackground": false
+		},
+		{
+			"label": "Recheck Vercel env vars",
+			"type": "shell",
+			"command": "cmd /c \"\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" env ls\"",
+			"isBackground": false
+		},
+		{
+			"label": "Deploy current app to Vercel",
+			"type": "shell",
+			"command": "cmd /c \"\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" deploy --prod --yes\"",
+			"isBackground": false
+		},
+		{
+			"label": "Check git remotes",
+			"type": "shell",
+			"command": "git remote -v",
+			"isBackground": false
+		},
+		{
+			"label": "Check vercel git commands",
+			"type": "shell",
+			"command": "cmd /c \"\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" --help\"",
+			"isBackground": false
+		},
+		{
+			"label": "Vercel git help",
+			"type": "shell",
+			"command": "cmd /c \"\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" git --help\"",
+			"isBackground": false
+		},
+		{
+			"label": "Check GitHub CLI",
+			"type": "shell",
+			"command": "gh --version",
+			"isBackground": false
+		},
+		{
+			"label": "Check gh auth",
+			"type": "shell",
+			"command": "gh auth status",
+			"isBackground": false
+		},
+		{
+			"label": "Connect Vercel project to Git",
+			"type": "shell",
+			"command": "cmd /c \"\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" git connect\"",
+			"isBackground": false
+		},
+		{
+			"label": "Check git remotes now",
+			"type": "shell",
+			"command": "git remote -v",
+			"isBackground": false
+		},
+		{
+			"label": "Check branch and commits",
+			"type": "shell",
+			"command": "git branch --show-current; git log --oneline -n 3",
+			"isBackground": false
+		},
+		{
+			"label": "Set likely origin remote",
+			"type": "shell",
+			"command": "git remote add origin https://github.com/mystodamus-projects/focusflow-app.git",
+			"isBackground": false
+		},
+		{
+			"label": "Try Vercel git connect with URL",
+			"type": "shell",
+			"command": "cmd /c \"\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" git connect https://github.com/mystodamus-projects/focusflow-app.git\"",
+			"isBackground": false
+		},
+		{
+			"label": "Attempt push to origin",
+			"type": "shell",
+			"command": "git push -u origin master",
+			"isBackground": false
+		},
+		{
+			"label": "Probe likely GitHub repo names",
+			"type": "shell",
+			"command": "git ls-remote https://github.com/mystodamus/focusflow.git; git ls-remote https://github.com/mystodamus/focusflow-app.git; git ls-remote https://github.com/mystodamus-projects/focusflow.git; git ls-remote https://github.com/focusflow-app/focusflow-app.git",
+			"isBackground": false
+		},
+		{
+			"label": "Try interactive Vercel git connect",
+			"type": "shell",
+			"command": "cmd /c \"\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" git connect\"",
+			"isBackground": false
+		},
+		{
+			"label": "Set git origin URL",
+			"type": "shell",
+			"command": "git remote set-url origin https://github.com/MystoDamus/focusflow-app.git",
+			"isBackground": false
+		},
+		{
+			"label": "Rename branch to main",
+			"type": "shell",
+			"command": "git branch -M main",
+			"isBackground": false
+		},
+		{
+			"label": "Push main branch",
+			"type": "shell",
+			"command": "git push -u origin main",
+			"isBackground": false
+		},
+		{
+			"label": "Connect Vercel to GitHub repo",
+			"type": "shell",
+			"command": "cmd /c \"\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" git connect https://github.com/MystoDamus/focusflow-app.git\"",
+			"isBackground": false
+		},
+		{
+			"label": "Set preview Supabase URL v2",
+			"type": "shell",
+			"command": "$node='C:\\Program Files\\nodejs\\node.exe'; $vercel='C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js'; $tmp=New-TemporaryFile; @('https://maxhhdhuzampkviohmjm.supabase.co','') | Set-Content -Path $tmp; Get-Content $tmp | & $node $vercel env add VITE_SUPABASE_URL preview; Remove-Item $tmp -Force",
+			"isBackground": false
+		},
+		{
+			"label": "Set preview Supabase key v2",
+			"type": "shell",
+			"command": "$node='C:\\Program Files\\nodejs\\node.exe'; $vercel='C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js'; $tmp=New-TemporaryFile; @('sb_publishable_L6AUCfqGMgqVwecDZLZM1A_p6BpppG3','') | Set-Content -Path $tmp; Get-Content $tmp | & $node $vercel env add VITE_SUPABASE_ANON_KEY preview; Remove-Item $tmp -Force",
+			"isBackground": false
+		},
+		{
+			"label": "Check vercel env add help",
+			"type": "shell",
+			"command": "cmd /c \"\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" env add --help\"",
+			"isBackground": false
+		},
+		{
+			"label": "Set preview URL non-interactive",
+			"type": "shell",
+			"command": "cmd /c \"\\\"C:\\Program Files\\nodejs\\node.exe\\\" \\\"C:\\Users\\Cy\\AppData\\Roaming\\npm\\node_modules\\vercel\\dist\\index.js\\\" env add VITE_SUPABASE_URL preview --value https://maxhhdhuzampkviohmjm.supabase.co --yes --force\"",
+			"isBackground": false
+		}
+	]
+}

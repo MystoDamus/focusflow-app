@@ -7,6 +7,7 @@ function PlannerPage({
   onSetPlannerDraft,
   onAddPlannerMission,
   onToggleMissionStatus,
+  onDeletePlannerMission,
 }) {
   return (
     <section className="feature-page">
@@ -24,15 +25,24 @@ function PlannerPage({
           </form>
           <div className="list-block">
             {planner.missions.map((mission) => (
-              <button
-                key={mission.id}
-                type="button"
-                className={`list-item ${mission.status === "done" ? "is-done" : ""}`}
-                onClick={() => onToggleMissionStatus(mission.id)}
-              >
-                <strong>{mission.title}</strong>
-                <span>{mission.status}</span>
-              </button>
+              <div key={mission.id} className="list-item-with-action">
+                <button
+                  type="button"
+                  className={`list-item ${mission.status === "done" ? "is-done" : ""}`}
+                  onClick={() => onToggleMissionStatus(mission.id)}
+                >
+                  <strong>{mission.title}</strong>
+                  <span>{mission.status}</span>
+                </button>
+                <button
+                  type="button"
+                  className="ghost-button icon-btn"
+                  onClick={() => onDeletePlannerMission(mission.id)}
+                  title="Delete mission"
+                >
+                  ×
+                </button>
+              </div>
             ))}
           </div>
         </article>

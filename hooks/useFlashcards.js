@@ -6,6 +6,8 @@ export default function useFlashcards(state, setState, showToast) {
   const [newCardQuestion, setNewCardQuestion] = useState("");
   const [newCardAnswer, setNewCardAnswer] = useState("");
   const [newCardChoices, setNewCardChoices] = useState("");
+  const [editingCardId, setEditingCardId] = useState(null);
+  const [studyFilter, setStudyFilter] = useState("all"); // "all" | "hard" | "due"
 
   const activeSet = state.flashcards.sets.find((entry) => entry.id === state.flashcards.activeSetId) ?? null;
   const flashSession = state.flashcards.session;
@@ -260,6 +262,141 @@ export default function useFlashcards(state, setState, showToast) {
     });
   }
 
+  function deleteFlashcardCard(cardId) {
+    setState((current) => ({
+      ...current,
+      flashcards: {
+        ...current.flashcards,
+        sets: current.flashcards.sets.map((setEntry) =>
+          setEntry.id !== current.flashcards.activeSetId
+            ? setEntry
+            : { ...setEntry, cards: setEntry.cards.filter((card) => card.id !== cardId) },
+        ),
+      },
+    }));
+    showToast("Card deleted");
+  }
+
+  function deleteFlashcardSet(setId) {
+    setState((current) => {
+      const remaining = current.flashcards.sets.filter((setEntry) => setEntry.id !== setId);
+      return {
+        ...current,
+        flashcards: {
+          ...current.flashcards,
+          sets: remaining,
+          activeSetId: current.flashcards.activeSetId === setId ? (remaining[0]?.id ?? null) : current.flashcards.activeSetId,
+        },
+      };
+    });
+    showToast("Set deleted");
+  }
+
+  function updateFlashcardCard(cardId, question, answer, choicesRaw) {
+    const normalizedAnswer = answer.trim();
+    const choiceValues = [
+      normalizedAnswer,
+      ...(choicesRaw || "").split("|").map((c) => c.trim()).filter(Boolean),
+    ].slice(0, 4);
+    const isTrueFalse = !choicesRaw.trim() && ["true", "false"].includes(normalizedAnswer.toLowerCase());
+
+    setState((current) => ({
+      ...current,
+      flashcards: {
+        ...current.flashcards,
+        sets: current.flashcards.sets.map((setEntry) =>
+          setEntry.id !== current.flashcards.activeSetId
+            ? setEntry
+            : {
+                ...setEntry,
+                cards: setEntry.cards.map((card) =>
+                  card.id !== cardId
+                    ? card
+                    : {
+                        ...card,
+                        question: question.trim(),
+                        answer: normalizedAnswer,
+                        choices: isTrueFalse ? ["True", "False"] : choiceValues.length >= 2 ? choiceValues : [normalizedAnswer],
+                        type: isTrueFalse ? "true-false" : choiceValues.length >= 2 ? "mcq" : "basic",
+                      },
+                ),
+              },
+        ),
+      },
+    }));
+    showToast("Card updated");
+  }
+
+  function startFlashcardSessionFiltered(filter = "all") {
+    if (!activeSet || activeSet.cards.length === 0) {
+      showToast("Add cards first");
+      return;
+    }
+
+    let cards = [...activeSet.cards];
+    if (filter === "hard") {
+      cards = cards.filter((card) => (card.strength ?? 1) <= 1);
+      if (!cards.length) {
+        showToast("No hard cards — studying all");
+        cards = [...activeSet.cards];
+      }
+    } else if (filter === "due") {
+      cards = cards.filter((card) => !card.dueDay || card.dueDay <= state.dayKey);
+      if (!cards.length) {
+        showToast("No due cards today — studying all");
+        cards = [...activeSet.cards];
+      }
+    }
+
+    const deck = cards.sort(() => Math.random() - 0.5);
+    setState((current) => ({
+      ...current,
+      flashcards: {
+        ...current.flashcards,
+        session: { index: 0, deck, correct: 0, answered: 0, reveal: false },
+      },
+    }));
+  }
+
+  function importCardsFromText(text) {
+    if (!activeSet || !text.trim()) return;
+    const rows = text.trim().split("\n").filter(Boolean);
+    const newCards = rows
+      .map((row) => {
+        const parts = row.split(/\t|,/).map((p) => p.trim());
+        if (parts.length < 2) return null;
+        const [question, answer, ...rest] = parts;
+        if (!question || !answer) return null;
+        const choiceValues = [answer, ...rest].slice(0, 4);
+        return {
+          id: `card-${Date.now()}-${Math.random()}`,
+          question,
+          answer,
+          choices: choiceValues.length >= 2 ? choiceValues : [answer],
+          type: choiceValues.length >= 2 ? "mcq" : "basic",
+        };
+      })
+      .filter(Boolean);
+
+    if (!newCards.length) {
+      showToast("No valid rows found. Use: Question[tab]Answer[tab]Choice2...");
+      return;
+    }
+
+    setState((current) => ({
+      ...current,
+      flashcards: {
+        ...current.flashcards,
+        sets: current.flashcards.sets.map((setEntry) =>
+          setEntry.id === current.flashcards.activeSetId
+            ? { ...setEntry, cards: [...newCards, ...setEntry.cards] }
+            : setEntry,
+        ),
+      },
+    }));
+    showToast(`${newCards.length} cards imported`);
+  }
+
   return {
     activeSet,
     flashSession,
@@ -267,13 +404,22 @@ export default function useFlashcards(state, setState, showToast) {
     newCardQuestion,
     newCardAnswer,
     newCardChoices,
+    editingCardId,
+    studyFilter,
     setNewSetTitle,
     setNewCardQuestion,
     setNewCardAnswer,
     setNewCardChoices,
+    setEditingCardId,
+    setStudyFilter,
     addFlashcardSet,
     addFlashcardCard,
+    deleteFlashcardCard,
+    deleteFlashcardSet,
+    updateFlashcardCard,
     startFlashcardSession,
+    startFlashcardSessionFiltered,
+    importCardsFromText,
     answerFlashcard,
     answerOpenFlashcard,
     rateFlashcard,

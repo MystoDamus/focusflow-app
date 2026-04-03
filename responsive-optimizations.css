@@ -1,0 +1,533 @@
+/* ─────────────────────────────────────────── */
+/* RESPONSIVE DESIGN & PERFORMANCE OPTIMIZATIONS */
+/* ─────────────────────────────────────────── */
+
+/* Smooth scrolling and animation optimizations */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Transform-based animations for better performance */
+button, 
+.sidebar-link,
+.panel {
+  will-change: auto;
+  transition: background 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:hover {
+  will-change: transform;
+}
+
+/* Mobile-first responsive improvements */
+@media (max-width: 1440px) {
+  .dashboard-shell {
+    width: min(1140px, calc(100% - 24px));
+  }
+
+  .dashboard-layout {
+    gap: 16px;
+  }
+
+  .panel {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .dashboard-shell {
+    width: min(100%, calc(100% - 20px));
+    padding: 24px 0 40px;
+  }
+
+  .dashboard-layout {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dashboard-main {
+    min-width: 100%;
+  }
+
+  .dashboard-side {
+    width: 100%;
+    order: -1;
+  }
+
+  .hero-bar {
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+  }
+
+  .hero-bar__badges {
+    justify-content: flex-start;
+  }
+
+  .panel {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .sidebar-menu {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-shell {
+    width: min(100%, calc(100% - 16px));
+    padding: 16px 0 32px;
+  }
+
+  .panel {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .sidebar-menu {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+
+  .sidebar-link {
+    padding: 8px;
+    min-height: 44px;
+    font-size: 0.8rem;
+  }
+
+  .hero-bar {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .hero-bar__stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .dashboard-utility-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-utility-card {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  /* Improve touch targets on mobile */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .mana-track,
+  .xp-track,
+  .goal-timeline-track {
+    height: 24px;
+  }
+
+  .timer-presets {
+    gap: 8px;
+  }
+
+  .preset-btn {
+    flex: 1;
+    font-size: 0.85rem;
+    padding: 8px 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-shell {
+    width: min(100%, calc(100% - 12px));
+    padding: 12px 0 28px;
+  }
+
+  .dashboard-main,
+  .dashboard-side {
+    width: 100%;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .panel {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .panel-heading {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .panel-heading h2 {
+    font-size: 1.1rem;
+  }
+
+  .hero-bar {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .hero-bar__title {
+    font-size: 1.2rem;
+  }
+
+  .hero-bar__stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .herostat__label {
+    font-size: 0.7rem;
+  }
+
+  .herostat__value {
+    font-size: 1rem;
+  }
+
+  .feature-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .sidebar-menu {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+  }
+
+  .sidebar-link {
+    padding: 8px 6px;
+    min-height: 40px;
+    font-size: 0.75rem;
+  }
+
+  .sidebar-link span {
+    display: none;
+  }
+
+  .timer-presets {
+    gap: 6px;
+  }
+
+  .preset-btn {
+    font-size: 0.8rem;
+    padding: 6px 8px;
+  }
+
+  .quest-card {
+    padding: 10px;
+  }
+
+  .quest-card__title {
+    font-size: 0.95rem;
+  }
+
+  .quest-card__meta {
+    font-size: 0.8rem;
+  }
+
+  .dashboard-utility-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .dashboard-modal {
+    width: 95vw !important;
+    max-height: 85vh !important;
+    padding: 16px !important;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+
+  /* Hide non-essential widgets on small screens */
+  .dashboard-utility-card--secondary {
+    display: none;
+  }
+
+  /* Stack layouts vertically */
+  .arena-actions,
+  .goal-form,
+  .timer-actions,
+  .quiz-powerups,
+  .quest-actions-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-shell {
+    padding: 8px 0 24px;
+  }
+
+  .panel {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+  }
+
+  .panel h3,
+  .panel-heading h2 {
+    font-size: 1rem;
+  }
+
+  .sidebar-link {
+    font-size: 0.7rem;
+    padding: 6px;
+    min-height: 36px;
+  }
+
+  .hero-bar__stats {
+    grid-template-columns: 1fr;
+  }
+
+  .herostat {
+    padding: 6px;
+  }
+
+  .mana-fill,
+  .xp-fill {
+    height: 16px;
+  }
+
+  .dashboard-modal {
+    width: 100vw !important;
+    max-height: 90vh !important;
+    border-radius: 16px 16px 0 0 !important;
+    padding: 12px !important;
+  }
+
+  .preset-btn {
+    padding: 6px;
+    font-size: 0.75rem;
+  }
+
+  /* Essential buttons only */
+  .secondary-button {
+    display: none;
+  }
+
+  .quest-card__tag {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+  }
+
+  .mana-card__topline strong {
+    font-size: 1.5rem;
+  }
+
+  .arena-boss-name {
+    font-size: 1rem;
+  }
+
+  .theme-obsidian,
+  .theme-ember {
+    --text: #ffffff;
+    --muted: #d4d4d4;
+  }
+
+  /* Performance: disable animations on very small screens */
+  * {
+    animation-duration: 0.3s !important;
+  }
+}
+
+/* Landscape mobile optimization */
+@media (max-height: 500px) and (orientation: landscape) {
+  .sidebar-nav {
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+
+  .dashboard-shell {
+    padding: 8px 0 16px;
+  }
+
+  .panel {
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+
+  .hero-bar {
+    padding: 8px;
+    gap: 10px;
+  }
+
+  .sidebar-menu {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* Accessibility: Devices with hover capability */
+@media (hover: hover) and (pointer: fine) {
+  button:hover {
+    transform: translateY(-1px);
+  }
+
+  .panel:hover {
+    border-color: rgba(214, 176, 92, 0.4);
+  }
+
+  .sidebar-link:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* Touch-only devices */
+@media (hover: none) and (pointer: coarse) {
+  button {
+    min-height: 48px;
+  }
+
+  .panel {
+    padding: 14px;
+  }
+
+  button:active {
+    opacity: 0.85;
+  }
+}
+
+/* Dark mode optimizations */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #0b0714;
+  }
+}
+
+/* Light mode fallback (if user prefers light) */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f5f5f5;
+    --text: #1a1a1a;
+    --muted: #888;
+    --panel: rgba(245, 245, 245, 0.9);
+    --border: rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High refresh rate devices */
+@supports (backdrop-filter: blur(10px)) {
+  .panel,
+  .hero-bar {
+    backdrop-filter: blur(10px);
+  }
+}
+
+/* GPU acceleration for smooth animations */
+.mana-fill,
+.xp-fill,
+.goal-timeline-fill {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Optimization: Use transform instead of width changes */
+@keyframes mana-fill-anim {
+  0% {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  100% {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
+/* Container queries for responsive components */
+@supports (container-type: inline-size) {
+  .panel {
+    container-type: inline-size;
+  }
+
+  @container (max-width: 400px) {
+    .panel {
+      padding: 10px;
+    }
+
+    .sidebar-link {
+      font-size: 0.7rem;
+    }
+  }
+}
+
+/* Icon button optimizations */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 6px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid rgba(214, 176, 92, 0.15);
+  color: #f7ecd0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-button:hover {
+  background: rgba(214, 176, 92, 0.1);
+  border-color: rgba(214, 176, 92, 0.3);
+}
+
+.icon-button:active {
+  transform: scale(0.95);
+}
+
+/* Loading states */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Add smooth page transitions */
+main {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

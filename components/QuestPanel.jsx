@@ -24,6 +24,7 @@ function QuestPanel({
   ambientEnabled,
   ambientMode,
   onCompleteQuest,
+  onDeleteQuest,
   onSetNewQuestTitle,
   onSetNewQuestDifficulty,
   onAddCustomQuest,
@@ -87,25 +88,36 @@ function QuestPanel({
           const locked = prerequisite ? !prerequisite.completed : false;
 
           return (
-            <button
-              key={quest.id}
-              type="button"
-              className={`quest-card ${quest.completed ? "is-looted" : ""} ${locked ? "is-locked" : ""}`}
-              onClick={() => onCompleteQuest(quest.id)}
-              disabled={quest.completed || locked}
-            >
-              <div className="quest-card__icon">
-                {quest.completed ? <CheckCircle2 size={18} /> : quest.type === "boss" ? <Skull size={18} /> : <Swords size={18} />}
-              </div>
-              <div className="quest-card__body">
-                <strong>{quest.title}</strong>
-                <span>
-                  {quest.type} / {quest.difficulty}
-                  {locked ? " / chain locked" : ""}
-                </span>
-              </div>
-              <span className="quest-card__tag">{quest.xpReward} XP</span>
-            </button>
+            <div key={quest.id} className="quest-card-row">
+              <button
+                type="button"
+                className={`quest-card ${quest.completed ? "is-looted" : ""} ${locked ? "is-locked" : ""}`}
+                onClick={() => onCompleteQuest(quest.id)}
+                disabled={locked}
+              >
+                <div className="quest-card__icon">
+                  {quest.completed ? <CheckCircle2 size={18} /> : quest.type === "boss" ? <Skull size={18} /> : <Swords size={18} />}
+                </div>
+                <div className="quest-card__body">
+                  <strong>{quest.title}</strong>
+                  <span>
+                    {quest.type} / {quest.difficulty}
+                    {locked ? " / chain locked" : ""}
+                  </span>
+                </div>
+                <span className="quest-card__tag">{quest.xpReward} XP</span>
+              </button>
+              {!quest.completed && (
+                <button
+                  type="button"
+                  className="quest-delete-btn"
+                  onClick={() => onDeleteQuest(quest.id)}
+                  title="Remove quest"
+                >
+                  ×
+                </button>
+              )}
+            </div>
           );
         })}
       </div>

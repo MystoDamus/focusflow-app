@@ -46,5 +46,15 @@ export default function usePlanner(state, setState) {
     }));
   }
 
-  return { plannerDraft, setPlannerDraft, plannerCompletion, addPlannerMission, toggleMissionStatus };
+  function deletePlannerMission(missionId) {
+    setState((current) => ({
+      ...current,
+      planner: {
+        ...current.planner,
+        missions: current.planner.missions.filter((mission) => mission.id !== missionId),
+      },
+    }));
+  }
+
+  return { plannerDraft, setPlannerDraft, plannerCompletion, addPlannerMission, toggleMissionStatus, deletePlannerMission };
 }
