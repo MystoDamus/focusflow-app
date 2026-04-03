@@ -358,6 +358,21 @@ function DashboardView({
         </div>
       </div>
 
+      <div className="dashboard-utilities">
+        <article className="utility-card" onClick={() => setMaximizedWidget("calendar")}>
+          <h4>📅 Calendar</h4>
+          <p>{examDates?.length || 0} exams scheduled</p>
+        </article>
+        <article className="utility-card" onClick={() => setMaximizedWidget("notes")}>
+          <h4>📝 Notes</h4>
+          <p>{notesItems?.length || 0} notes saved</p>
+        </article>
+        <article className="utility-card" onClick={() => setMaximizedWidget("leaderboard")}>
+          <h4>🏆 Leaderboard</h4>
+          <p>View rankings</p>
+        </article>
+      </div>
+
       {maximizedWidget ? (
         <div className="dashboard-modal-overlay" role="dialog" aria-modal="true">
           <div
