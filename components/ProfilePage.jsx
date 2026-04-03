@@ -14,17 +14,30 @@ function ProfilePage({
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(userProfile?.displayName || "");
   const [editEmail, setEditEmail] = useState(userProfile?.email || "");
+  const [editBio, setEditBio] = useState(userProfile?.bio || "");
+  const [editTimezone, setEditTimezone] = useState(userProfile?.timezone || "UTC+08:00");
+  const [editDailyGoal, setEditDailyGoal] = useState(userProfile?.dailyGoalMinutes || 90);
+  const [profileStatus, setProfileStatus] = useState(userProfile?.status || "Online");
 
-  const totalQuests = subjects.reduce((sum, subj) => sum + (subj.progress?.questsCleared || 0), 0);
-  const totalBosses = subjects.reduce((sum, subj) => sum + (subj.progress?.bossVictories || 0), 0);
-  const totalShards = subjects.reduce((sum, subj) => sum + (subj.progress?.shards || 0), 0);
-  const avgLevel = Math.floor(subjects.reduce((sum, subj) => sum + (subj.progress?.level || 1), 0) / Math.max(subjects.length, 1));
+  const friendCode = userProfile?.friendCode || "FF-CADET-001";
+  const linkedAccounts = userProfile?.linkedAccounts || ["Discord", "GitHub"];
+
+  const subjectList = Array.isArray(subjects) ? subjects : Object.values(subjects ?? {});
+
+  const totalQuests = subjectList.reduce((sum, subj) => sum + (subj?.progress?.questsCleared || 0), 0);
+  const totalBosses = subjectList.reduce((sum, subj) => sum + (subj?.progress?.bossVictories || 0), 0);
+  const totalShards = subjectList.reduce((sum, subj) => sum + (subj?.progress?.shards || 0), 0);
+  const avgLevel = Math.floor(subjectList.reduce((sum, subj) => sum + (subj?.progress?.level || 1), 0) / Math.max(subjectList.length, 1));
 
   const handleSaveProfile = () => {
     if (editName.trim()) {
       onUpdateProfile({
         displayName: editName,
         email: editEmail,
+        bio: editBio,
+        timezone: editTimezone,
+        dailyGoalMinutes: Number(editDailyGoal) || 90,
+        status: profileStatus,
       });
       setIsEditing(false);
     }
@@ -261,12 +274,49 @@ function ProfilePage({
                       placeholder="your@email.com"
                     />
                   </div>
+                  <div className="form-group">
+                    <label>Bio</label>
+                    <input
+                      type="text"
+                      value={editBio}
+                      onChange={(e) => setEditBio(e.target.value)}
+                      placeholder="What are you currently studying?"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Timezone</label>
+                    <input
+                      type="text"
+                      value={editTimezone}
+                      onChange={(e) => setEditTimezone(e.target.value)}
+                      placeholder="UTC+08:00"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Daily Study Goal (minutes)</label>
+                    <input
+                      type="number"
+                      min="15"
+                      max="480"
+                      value={editDailyGoal}
+                      onChange={(e) => setEditDailyGoal(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Status</label>
+                    <input
+                      type="text"
+                      value={profileStatus}
+                      onChange={(e) => setProfileStatus(e.target.value)}
+                      placeholder="Online / Focus Mode / Away"
+                    />
+                  </div>
                 </>
               )}
             </div>
           </div>
 
-          <div className="button-group" style={{ flexDirection: "column", margintTop: 0 }}>
+          <div className="button-group" style={{ flexDirection: "column", marginTop: 0 }}>
             {!isEditing && (
               <button className="btn btn-accent" onClick={() => setIsEditing(true)}>
                 <Edit2 size={16} />
@@ -283,6 +333,10 @@ function ProfilePage({
                   setIsEditing(false);
                   setEditName(userProfile?.displayName || "");
                   setEditEmail(userProfile?.email || "");
+                  setEditBio(userProfile?.bio || "");
+                  setEditTimezone(userProfile?.timezone || "UTC+08:00");
+                  setEditDailyGoal(userProfile?.dailyGoalMinutes || 90);
+                  setProfileStatus(userProfile?.status || "Online");
                 }}>
                   <X size={16} />
                   Cancel
@@ -293,15 +347,51 @@ function ProfilePage({
         </div>
       </div>
 
+      <div className="profile-card">
+        <h3 style={{ color: "#ffd36c", marginTop: 0 }}>Social & Presence</h3>
+        <div style={{ display: "grid", gap: "12px" }}>
+          <div className="list-item" style={{ display: "block" }}>
+            <strong>Friend Code</strong>
+            <p className="muted" style={{ marginTop: "4px" }}>{friendCode}</p>
+          </div>
+          <div className="list-item" style={{ display: "block" }}>
+            <strong>Presence</strong>
+            <p className="muted" style={{ marginTop: "4px" }}>{profileStatus}</p>
+          </div>
+          <div className="list-item" style={{ display: "block" }}>
+            <strong>Linked Accounts</strong>
+            <p className="muted" style={{ marginTop: "4px" }}>{linkedAccounts.join(" • ")}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="profile-card">
+        <h3 style={{ color: "#ffd36c", marginTop: 0 }}>Study Preferences</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px" }}>
+          <div style={{ padding: "14px", borderRadius: "8px", border: "1px solid rgba(255, 211, 108, 0.22)", background: "rgba(255, 211, 108, 0.08)" }}>
+            <span className="muted">Daily Goal</span>
+            <strong style={{ display: "block", color: "#ffd36c", marginTop: "6px" }}>{Number(editDailyGoal) || 90} min</strong>
+          </div>
+          <div style={{ padding: "14px", borderRadius: "8px", border: "1px solid rgba(99, 199, 255, 0.22)", background: "rgba(99, 199, 255, 0.08)" }}>
+            <span className="muted">Timezone</span>
+            <strong style={{ display: "block", color: "#63c7ff", marginTop: "6px" }}>{editTimezone || "UTC+08:00"}</strong>
+          </div>
+          <div style={{ padding: "14px", borderRadius: "8px", border: "1px solid rgba(129, 242, 164, 0.22)", background: "rgba(129, 242, 164, 0.08)" }}>
+            <span className="muted">Bio</span>
+            <strong style={{ display: "block", color: "#81f2a4", marginTop: "6px" }}>{editBio || "Add a study bio in edit mode"}</strong>
+          </div>
+        </div>
+      </div>
+
       {/* Stats Overview */}
       <div className="profile-card">
         <h3 style={{ color: "#ffd36c", marginTop: 0 }}>Achievement Summary</h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "16px" }}>
-          {[
-            { label: "Total Focus Time", value: `${(state.focusMinutes || 0).toLocaleString()} min` },
-            { label: "Current Streak", value: `${state.streak?.current || 0} days` },
-            { label: "Longest Streak", value: `${state.streak?.longest || 0} days` },
-            { label: "Prestige Level", value: `${state.prestigeLevel || 0}` },
+            {[
+            { label: "Total Focus Time", value: `${(state?.focusMinutes || 0).toLocaleString()} min` },
+            { label: "Current Streak", value: `${state?.streak?.current || 0} days` },
+            { label: "Longest Streak", value: `${state?.streak?.longest || 0} days` },
+            { label: "Prestige Level", value: `${state?.prestigeLevel || 0}` },
           ].map((stat, idx) => (
             <div key={idx} style={{
               padding: "16px",

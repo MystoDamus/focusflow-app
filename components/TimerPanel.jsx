@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pause, Play, RefreshCcw, WandSparkles, Maximize2, Settings } from "lucide-react";
 
 function TimerPanel({
@@ -23,8 +23,8 @@ function TimerPanel({
   onSetCustomTimer,
 }) {
     const [showCustom, setShowCustom] = useState(false);
-    const [customFocus, setCustomFocus] = useState(activeSubject.focusMinutes);
-    const [customBreak, setCustomBreak] = useState(activeSubject.breakMinutes);
+  const [customFocus, setCustomFocus] = useState(String(activeSubject.focusMinutes));
+  const [customBreak, setCustomBreak] = useState(String(activeSubject.breakMinutes));
 
     const PRESETS = [
       { label: "25m", focus: 25, brk: 5 },
@@ -32,9 +32,48 @@ function TimerPanel({
       { label: "90m", focus: 90, brk: 15 },
     ];
 
+    useEffect(() => {
+      if (!showCustom) {
+        return;
+      }
+
+      setCustomFocus(String(activeSubject.focusMinutes));
+      setCustomBreak(String(activeSubject.breakMinutes));
+    }, [activeSubject.focusMinutes, activeSubject.breakMinutes, showCustom]);
+
+    const getTimerError = (value, max, label) => {
+      const raw = String(value ?? "").trim();
+      if (!raw) {
+        return `${label} is required.`;
+      }
+
+      const parsed = Number.parseInt(raw, 10);
+      if (!Number.isFinite(parsed) || Number.isNaN(parsed)) {
+        return `${label} must be a number.`;
+      }
+
+      if (parsed <= 0) {
+        return `${label} must be greater than 0.`;
+      }
+
+      if (parsed > max) {
+        return `${label} must be ${max} or less.`;
+      }
+
+      return "";
+    };
+
+    const focusError = getTimerError(customFocus, 180, "Focus");
+    const breakError = getTimerError(customBreak, 60, "Break");
+    const focusValue = Number.parseInt(customFocus, 10);
+    const breakValue = Number.parseInt(customBreak, 10);
+    const isFocusValid = !focusError;
+    const isBreakValid = !breakError;
+    const isCustomValid = !focusError && !breakError;
+
     const handleCustomSubmit = () => {
-      if (customFocus > 0 && customBreak > 0) {
-        onSetCustomTimer(customFocus, customBreak);
+      if (isCustomValid) {
+        onSetCustomTimer(focusValue, breakValue);
         setShowCustom(false);
       }
     };
@@ -63,6 +102,15 @@ function TimerPanel({
         </div>
       </div>
 
+      <div className="mana-card">
+        <div className="mana-card__topline">
+          <span className="eyebrow">Arcane Reserves</span>
+        </div>
+        <div className="mana-track" aria-label="Mana bar">
+          <div className="mana-track-fill" style={{ width: `${manaPercent}%` }} />
+        </div>
+      </div>
+
       <div className="timer-presets" role="group" aria-label="Timer presets">
         {PRESETS.map((p) => (
           <button
@@ -81,79 +129,83 @@ function TimerPanel({
           title="Custom timer"
         >
           <Settings size={14} />
+          <span style={{ marginLeft: "6px" }}>Custom</span>
         </button>
       </div>
 
       {showCustom && (
         <div style={{ 
-          display: "flex", 
-          gap: "8px", 
           marginBottom: "12px", 
           padding: "12px", 
           backgroundColor: "rgba(99, 199, 255, 0.1)",
           borderRadius: "8px"
         }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontSize: "12px", opacity: 0.7 }}>Focus (min)</label>
-            <input
-              type="number"
-              min="1"
-              max="180"
-              value={customFocus}
-              onChange={(e) => setCustomFocus(Math.max(1, Number(e.target.value)))}
-              style={{
-                width: "100%",
-                padding: "6px",
-                backgroundColor: "rgba(11, 7, 20, 0.8)",
-                border: "1px solid rgba(214, 176, 92, 0.25)",
-                color: "#f7ecd0",
-                borderRadius: "4px",
-                marginTop: "4px"
-              }}
-            />
+          <div style={{ display: "flex", gap: "8px" }}>      
+            <div style={{ flex: 1 }}>
+              <label style={{ fontSize: "12px", opacity: 0.7 }}>Focus (min)</label>
+              <input
+                type="number"
+                min="1"
+                max="180"
+                value={customFocus}
+                onChange={(e) => setCustomFocus(e.target.value)}
+                aria-invalid={!isFocusValid}
+                aria-describedby={!isFocusValid ? "custom-focus-error" : undefined}
+                style={{
+                  width: "100%",
+                  padding: "6px",
+                  backgroundColor: "rgba(11, 7, 20, 0.8)",
+                  border: `1px solid ${isFocusValid ? "rgba(214, 176, 92, 0.25)" : "rgba(255, 120, 120, 0.8)"}`,
+                  color: "#f7ecd0",
+                  borderRadius: "4px",
+                  marginTop: "4px"
+                }}
+              />
+              {!isFocusValid && (
+                <p id="custom-focus-error" style={{ margin: "6px 0 0", fontSize: "12px", color: "#ff9b9b" }}>
+                  {focusError}
+                </p>
+              )}
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontSize: "12px", opacity: 0.7 }}>Break (min)</label>
+              <input
+                type="number"
+                min="1"
+                max="60"
+                value={customBreak}
+                onChange={(e) => setCustomBreak(e.target.value)}
+                aria-invalid={!isBreakValid}
+                aria-describedby={!isBreakValid ? "custom-break-error" : undefined}
+                style={{
+                  width: "100%",
+                  padding: "6px",
+                  backgroundColor: "rgba(11, 7, 20, 0.8)",
+                  border: `1px solid ${isBreakValid ? "rgba(214, 176, 92, 0.25)" : "rgba(255, 120, 120, 0.8)"}`,
+                  color: "#f7ecd0",
+                  borderRadius: "4px",
+                  marginTop: "4px"
+                }}
+              />
+              {!isBreakValid && (
+                <p id="custom-break-error" style={{ margin: "6px 0 0", fontSize: "12px", color: "#ff9b9b" }}>
+                  {breakError}
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              className="accent-button"
+              onClick={handleCustomSubmit}
+              disabled={!isCustomValid}
+              style={{ alignSelf: "flex-end" }}
+            >
+              Set
+            </button>
           </div>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontSize: "12px", opacity: 0.7 }}>Break (min)</label>
-            <input
-              type="number"
-              min="1"
-              max="60"
-              value={customBreak}
-              onChange={(e) => setCustomBreak(Math.max(1, Number(e.target.value)))}
-              style={{
-                width: "100%",
-                padding: "6px",
-                backgroundColor: "rgba(11, 7, 20, 0.8)",
-                border: "1px solid rgba(214, 176, 92, 0.25)",
-                color: "#f7ecd0",
-                borderRadius: "4px",
-                marginTop: "4px"
-              }}
-            />
-          </div>
-          <button
-            type="button"
-            className="accent-button"
-            onClick={handleCustomSubmit}
-            style={{ alignSelf: "flex-end" }}
-          >
-            Set
-          </button>
         </div>
       )}
 
-      <div className="mana-card">
-        <div className="mana-card__topline">
-          <span>Arcane reserves</span>
-          <strong>{formatTime(timer.secondsLeft)}</strong>
-        </div>
-        <div className="mana-track" aria-label="Mana bar">
-          <div className="mana-fill" style={{ width: `${manaPercent}%` }} />
-        </div>
-        <p>
-          Focus {activeSubject.focusMinutes} / Break {activeSubject.breakMinutes} minutes
-        </p>
-      </div>
 
       <div className="timer-actions">
         <button type="button" className="accent-button" onClick={onToggleTimer}>

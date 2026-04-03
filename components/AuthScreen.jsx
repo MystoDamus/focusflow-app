@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 export default function AuthScreen({
+  deployStamp,
   onLogin,
   onSignup,
   onRequestPasswordReset,
@@ -51,8 +52,9 @@ export default function AuthScreen({
     <div className="auth-screen">
       <div className="auth-container">
         <div className="auth-header">
-          <h1>⚔️ FocusFlow</h1>
+          <h1>⚔️ FocusFlow v4</h1>
           <p>Master your studies through epic quests</p>
+          <span className="auth-build">Build {deployStamp}</span>
         </div>
 
         <div className="auth-form-wrapper">
@@ -195,6 +197,18 @@ export default function AuthScreen({
           margin: 0;
           font-size: 0.95rem;
           opacity: 0.9;
+        }
+
+        .auth-build {
+          margin-top: 10px;
+          display: inline-block;
+          font-size: 0.68rem;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          border: 1px solid rgba(255, 255, 255, 0.35);
+          border-radius: 999px;
+          padding: 3px 8px;
+          background: rgba(255, 255, 255, 0.12);
         }
 
         .auth-form-wrapper {

@@ -112,11 +112,15 @@ const DIFFICULTY_VALUES = {
 const DEFAULT_SETTINGS = {
   soundEnabled: true,
   ambientEnabled: false,
+  feedbackMode: "standard",
   reducedMotion: false,
   highContrast: false,
   largeText: false,
   ambientMode: "library",
   notificationsEnabled: false,
+  musicEnabled: true,
+  musicVolume: 40,
+  musicMuted: false,
 };
 
 const DEFAULT_GUILD = {
@@ -590,8 +594,45 @@ const DAILY_QUOTES = [
   "Little things make big days.",
 ];
 
+const DAILY_STUDY_MOTIVATIONS = [
+  "Today's study session is an investment in tomorrow's success.",
+  "Every concept you master today opens new doors tomorrow.",
+  "You're closer to your goals than you were yesterday.",
+  "Your brain grows stronger with every study session.",
+  "Progress over perfection — keep moving forward.",
+  "Today's challenge becomes tomorrow's skill.",
+  "You've got this — one concept at a time.",
+  "Small steps today, giant leaps tomorrow.",
+  "Your future self will be grateful for today's effort.",
+  "Learning is the ultimate superpower.",
+  "Every question answered is a victory.",
+  "You're building mastery, one session at a time.",
+  "Your dedication today shapes your excellence tomorrow.",
+  "The struggle is where the growth happens.",
+  "Keep learning, keep growing, keep winning.",
+  "Today you learn what others put off until tomorrow.",
+  "Your curiosity is your greatest strength.",
+  "Excellence is built on a foundation of daily effort.",
+  "You're becoming the scholar you aspire to be.",
+  "Every minute of study compounds your knowledge.",
+  "Today's focus creates tomorrow's confidence.",
+  "You are capable of more than you think.",
+  "Learning is a journey, and you're on the right path.",
+  "Your effort today is inspiration for tomorrow.",
+  "Knowledge is power — keep building yours.",
+  "You're not just studying, you're transforming.",
+  "Today's preparation is tomorrow's advantage.",
+  "Your brain is hungry — feed it with learning.",
+  "Progress is progress, no matter how small.",
+  "You are stronger than your obstacles.",
+];
+
 function getDailyQuote(dayKey) {
   return DAILY_QUOTES[hashString(dayKey) % DAILY_QUOTES.length];
+}
+
+function getDailyMotivation(dayKey) {
+  return DAILY_STUDY_MOTIVATIONS[hashString(dayKey) % DAILY_STUDY_MOTIVATIONS.length];
 }
 
 const DAILY_TIPS = [
@@ -637,6 +678,7 @@ export {
   applyXp,
   buildInitialState,
   getDailyQuote,
+  getDailyMotivation,
   getDailyTip,
   isConsecutiveDay,
   formatTime,

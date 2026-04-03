@@ -103,6 +103,48 @@ export default function useSound(settings) {
           osc.start(t);
           osc.stop(t + 0.3);
         });
+      } else if (type === "combo-small") {
+        [659, 784].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = "triangle";
+          const t = ctx.currentTime + i * 0.06;
+          osc.frequency.setValueAtTime(freq, t);
+          gain.gain.setValueAtTime(0.1, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+          osc.start(t);
+          osc.stop(t + 0.24);
+        });
+      } else if (type === "combo-large") {
+        [784, 988, 1174].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = "sine";
+          const t = ctx.currentTime + i * 0.07;
+          osc.frequency.setValueAtTime(freq, t);
+          gain.gain.setValueAtTime(0.12, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.24);
+          osc.start(t);
+          osc.stop(t + 0.28);
+        });
+      } else if (type === "combo-legend") {
+        [880, 1174, 1318, 1568].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = i % 2 === 0 ? "triangle" : "sine";
+          const t = ctx.currentTime + i * 0.06;
+          osc.frequency.setValueAtTime(freq, t);
+          gain.gain.setValueAtTime(0.13, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.26);
+          osc.start(t);
+          osc.stop(t + 0.3);
+        });
       }
     } catch {
       // audio context blocked; silently ignore

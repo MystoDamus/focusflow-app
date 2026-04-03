@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  BookOpen,
   BookText,
   Brain,
   ChevronLeft,
@@ -7,6 +8,8 @@ import {
   Cloud,
   CloudOff,
   ClipboardCheck,
+  FilePlus2,
+  Heart,
   LayoutDashboard,
   LayoutList,
   LogOut,
@@ -20,19 +23,28 @@ import {
   User,
 } from "lucide-react";
 
-const NAV_ITEMS = [
+const MAIN_NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "flashcards", label: "Flashcards", icon: BookText },
   { id: "quiz", label: "Quiz Battle", icon: Brain },
-  { id: "practicetest", label: "Practice Test", icon: ClipboardCheck },
+  { id: "builder-studio", label: "Builder Studio", icon: FilePlus2 },
   { id: "planner", label: "Study Planner", icon: LayoutList },
-  { id: "progress", label: "Progress", icon: TrendingUp },
-  { id: "party", label: "Party", icon: Shield },
   { id: "achievements", label: "Achievements", icon: Star },
+  { id: "friends", label: "Friends", icon: Heart },
+  { id: "party", label: "Party", icon: Shield },
   { id: "shop", label: "Shop", icon: ShoppingBag },
   { id: "customize", label: "Avatar Lab", icon: User },
   { id: "profile", label: "Profile", icon: Sparkles },
-  { id: "analytics", label: "Analytics", icon: BarChart3 },
+];
+
+const STUDY_NAV_ITEMS = [
+  { id: "studylab", label: "Study Hub", icon: BookOpen, accent: "#ffd36c", badge: "HUB" },
+  { id: "study-leitner", label: "Leitner System", icon: BookOpen, accent: "#ffcc72", badge: "LEI" },
+  { id: "study-sq3r", label: "SQ3R Studio", icon: BookText, accent: "#7ce0ff", badge: "SQ3" },
+  { id: "study-blurting", label: "Blurting Lab", icon: Brain, accent: "#ff8f7d", badge: "BLT" },
+  { id: "study-interleaving", label: "Interleaving Mixer", icon: RefreshCw, accent: "#56d77f", badge: "INT" },
+  { id: "study-secondbrain", label: "Second Brain", icon: LayoutList, accent: "#c79bff", badge: "PAR" },
+  { id: "study-codetrace", label: "Code Trace", icon: ClipboardCheck, accent: "#93a8ff", badge: "COD" },
 ];
 
 const THEMES = [
@@ -44,6 +56,8 @@ const THEMES = [
 function SidebarNav({
   activeView,
   seasonTitle,
+  deployStamp,
+  studySuiteStats,
   onSetActiveView,
   collapsed,
   onToggleCollapse,
@@ -56,6 +70,31 @@ function SidebarNav({
   onRetrySync,
 }) {
   const syncOk = !backendEnabled || syncStatus === "synced" || syncStatus === "idle";
+
+  function renderNavButton(item, extraClass = "") {
+    const Icon = item.icon;
+    const active = activeView === item.id;
+    const isStudy = item.id === "studylab" || item.id.startsWith("study-");
+
+    const studyMetric = isStudy ? Number(studySuiteStats?.[item.id] ?? 0) : null;
+
+    return (
+      <button
+        key={item.id}
+        type="button"
+        className={`sidebar-link ${extraClass} ${active ? "is-active" : ""}`.trim()}
+        style={isStudy ? { "--study-accent": item.accent ?? "#7ce0ff" } : undefined}
+        onClick={() => onSetActiveView(item.id)}
+        data-tutorial={`nav-${item.id}`}
+        title={collapsed ? item.label : undefined}
+      >
+        <Icon size={16} />
+        {!collapsed && isStudy && <span className="sidebar-study-badge">{item.badge ?? "ST"}</span>}
+        {!collapsed && <span>{item.label}</span>}
+        {!collapsed && isStudy && <span className="sidebar-study-metric">{studyMetric}</span>}
+      </button>
+    );
+  }
 
   return (
     <aside className={`sidebar-nav ${collapsed ? "is-collapsed" : ""}`}>
@@ -76,23 +115,12 @@ function SidebarNav({
 
       {/* Nav links */}
       <nav className="sidebar-menu">
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const active = activeView === item.id;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              className={`sidebar-link ${active ? "is-active" : ""}`}
-              onClick={() => onSetActiveView(item.id)}
-              data-tutorial={`nav-${item.id}`}
-              title={collapsed ? item.label : undefined}
-            >
-              <Icon size={16} />
-              {!collapsed && <span>{item.label}</span>}
-            </button>
-          );
-        })}
+        {!collapsed && <p className="sidebar-section-label sidebar-menu-label">Main</p>}
+        {MAIN_NAV_ITEMS.map((item) => renderNavButton(item))}
+        {!collapsed && <p className="sidebar-section-label sidebar-menu-label sidebar-menu-label--study">Study Suite</p>}
+        <div className="sidebar-study-group">
+          {STUDY_NAV_ITEMS.map((item, index) => renderNavButton(item, index === 0 ? "sidebar-link--study sidebar-link--study-hub" : "sidebar-link--study"))}
+        </div>
       </nav>
 
       {/* Divider */}
@@ -169,7 +197,10 @@ function SidebarNav({
       {!collapsed && (
         <div className="sidebar-footer">
           <Sparkles size={12} />
-          <span>{seasonTitle}</span>
+          <div>
+            <span>{seasonTitle}</span>
+            <div className="sidebar-footer-meta">Build {deployStamp}</div>
+          </div>
         </div>
       )}
     </aside>

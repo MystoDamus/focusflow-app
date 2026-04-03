@@ -8,7 +8,34 @@
     <title>FocusFlow Guild Hall</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="boot-fallback" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(180deg,#121826,#070b14);color:#e6edf8;font-family:Segoe UI,Arial,sans-serif;">
+        <div style="width:min(720px,100%);border:1px solid #334155;border-radius:14px;padding:18px 20px;background:rgba(15,23,42,.72)">
+          <h1 style="margin:0 0 8px 0;font-size:22px;">FocusFlow Booting...</h1>
+          <p style="margin:0 0 10px 0;color:#9fb2d9;">If this stays on screen, a runtime error occurred. Version: 2026-04-03-StudySuite-v4</p>
+          <pre id="boot-error" style="margin:0;white-space:pre-wrap;color:#fecaca;font-size:12px;"></pre>
+        </div>
+      </div>
+    </div>
+    <script>
+      (function () {
+        function showError(text) {
+          var target = document.getElementById("boot-error");
+          if (target) {
+            target.textContent = String(text || "Unknown startup error");
+          }
+        }
+
+        window.addEventListener("error", function (event) {
+          showError((event && (event.message || (event.error && event.error.message))) || "Window error");
+        });
+
+        window.addEventListener("unhandledrejection", function (event) {
+          var reason = event && event.reason;
+          showError((reason && reason.message) || reason || "Unhandled promise rejection");
+        });
+      })();
+    </script>
     <script type="module" src="/main.jsx"></script>
   </body>
 </html>

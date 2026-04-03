@@ -1,6 +1,8 @@
-﻿import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
+﻿import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AuthScreen from "./components/AuthScreen";
 import Confetti from "./components/Confetti";
+import FullscreenTimer from "./components/FullscreenTimer";
+import MusicPlayer from "./components/MusicPlayer";
 import SidebarNav from "./components/SidebarNav";
 import useAudio from "./hooks/useAudio";
 import { useAuth } from "./hooks/useAuth";
@@ -9,22 +11,19 @@ import useFlashcards from "./hooks/useFlashcards";
 import useSound from "./hooks/useSound";
 import usePlanner from "./hooks/usePlanner";
 import useQuiz from "./hooks/useQuiz";
+import { formatAIError, generateFlashcardsAI, generateQuizAI, generateStudyPlanAI } from "./services/aiGeneration";
 import { createInitialParty, getPartyAverageLevel } from "./partySystem";
 import { getThemeForMode, getThemeById, getThemeCSSVariables } from "./themeSystem";
 
-const AnalyticsPage = lazy(() => import("./components/AnalyticsPage"));
-const AchievementsPage = lazy(() => import("./components/AchievementsPage"));
-const CustomizationPage = lazy(() => import("./components/CustomizationPage"));
+const AchievementsPage = lazy(() => import("./components/StatsPage"));
+const AvatarShopPage = lazy(() => import("./components/AvatarShopPage"));
 const DashboardView = lazy(() => import("./components/DashboardView"));
 const FlashcardsPage = lazy(() => import("./components/FlashcardsPage"));
-const FullscreenTimer = lazy(() => import("./components/FullscreenTimer"));
 const PartyViewer = lazy(() => import("./components/PartyViewer"));
 const PlannerPage = lazy(() => import("./components/PlannerPage"));
-const PracticeTestPage = lazy(() => import("./components/PracticeTestPage"));
-const ProgressPage = lazy(() => import("./components/ProgressPage"));
 const ProfilePage = lazy(() => import("./components/ProfilePage"));
 const QuizBattlePage = lazy(() => import("./components/QuizBattlePage"));
-const ShopUI = lazy(() => import("./components/ShopUI"));
+const StudyMethodsPage = lazy(() => import("./components/StudyMethodsPage"));
 const TutorialOverlay = lazy(() => import("./components/TutorialOverlay"));
 import {
   DIFFICULTY_VALUES,
@@ -39,6 +38,7 @@ import {
   getActiveTheme,
   getDayKey,
   getDailyQuote,
+  getDailyMotivation,
   getDailyTip,
   getPartyContribution,
   getReviewUrgency,
@@ -118,6 +118,11 @@ function ensureExpandedState(baseState) {
       sets: [],
       activeSetId: null,
       session: null,
+      lastSession: null,
+      weakStats: {
+        byTopic: {},
+        byType: {},
+      },
       ...(baseState.flashcards ?? {}),
     },
     quiz: {
@@ -125,6 +130,10 @@ function ensureExpandedState(baseState) {
       bestScore: 0,
       totalCorrect: 0,
       totalAnswered: 0,
+      weakStats: {
+        byTopic: {},
+        byType: {},
+      },
       ...(baseState.quiz ?? {}),
     },
     planner: {
@@ -172,6 +181,33 @@ function ensureExpandedState(baseState) {
       items: [],
       ...(baseState.notesData ?? {}),
     },
+    studyLab: {
+      sq3rEntries: baseState.studyLab?.sq3rEntries ?? [],
+      blurting: {
+        reference: "",
+        lastBlurt: "",
+        missed: "",
+        durationMinutes: 20,
+        ...(baseState.studyLab?.blurting ?? {}),
+      },
+      interleaving: {
+        customTopics: [],
+        topicWeights: {},
+        lastSession: null,
+        ...(baseState.studyLab?.interleaving ?? {}),
+      },
+      reminders: {
+        lastSyncDay: null,
+        autoSync: false,
+        ...(baseState.studyLab?.reminders ?? {}),
+      },
+      secondBrainNotes: baseState.studyLab?.secondBrainNotes ?? [],
+      codeTrace: {
+        snippet: "",
+        annotations: [],
+        ...(baseState.studyLab?.codeTrace ?? {}),
+      },
+    },
     partyRoster: baseState.partyRoster ?? createInitialParty(),
     gameModes: {
       activeMode: baseState.gameModes?.activeMode ?? "bossBattle",
@@ -183,6 +219,7 @@ function ensureExpandedState(baseState) {
 }
 
 function App() {
+  const deployStamp = "2026-04-03-BuilderUX-v8";
   const initialRef = useRef(null);
   if (!initialRef.current) {
     initialRef.current = ensureExpandedState(buildInitialState());
@@ -203,6 +240,14 @@ function App() {
   const [rewardToast, setRewardToast] = useState("");
   const [showConfetti, setShowConfetti] = useState(false);
   const [showFullscreenTimer, setShowFullscreenTimer] = useState(false);
+  const [builderStudioTab, setBuilderStudioTab] = useState("flashcards");
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiStatus, setAiStatus] = useState({
+    flashcards: null,
+    quiz: null,
+    studyPlan: null,
+  });
+  const [aiHealthLog, setAiHealthLog] = useState([]);
   const {
     user,
     profile: accountProfile,
@@ -228,7 +273,44 @@ function App() {
   const importFileRef = useRef(null);
   const previousBossHpRef = useRef(null);
   const confettiTimeoutRef = useRef(null);
+  const answerComboRef = useRef(0);
   const hasHealer = state.partyRoster.some((member) => member.role === "Healer");
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    function handleChunkLoadFailure(event) {
+      const reason = String(event?.reason?.message ?? event?.reason ?? "");
+      const failedDynamicImport = reason.includes("dynamically imported module")
+        || reason.includes("Failed to fetch dynamically imported module")
+        || reason.includes("error loading dynamically imported module");
+
+      if (!failedDynamicImport) {
+        return;
+      }
+
+      const retryKey = "focusflow_chunk_reload_once";
+      if (window.sessionStorage.getItem(retryKey) === "1") {
+        return;
+      }
+
+      window.sessionStorage.setItem(retryKey, "1");
+      window.location.reload();
+    }
+
+    window.addEventListener("unhandledrejection", handleChunkLoadFailure);
+    return () => window.removeEventListener("unhandledrejection", handleChunkLoadFailure);
+  }, []);
+
+  useEffect(() => {
+    if (state.ui.activeView === "flashcards-builder") {
+      setBuilderStudioTab("flashcards");
+    } else if (state.ui.activeView === "quiz-builder") {
+      setBuilderStudioTab("quiz");
+    }
+  }, [state.ui.activeView]);
 
   const { toggleAmbientAudio } = useAudio(state.settings, updateSetting, showToast);
   const {
@@ -248,11 +330,15 @@ function App() {
     setStudyFilter,
     addFlashcardSet,
     addFlashcardCard,
+    duplicateFlashcardCard,
+    moveFlashcardCard,
+    reorderFlashcardCards,
     deleteFlashcardCard,
     deleteFlashcardSet,
     updateFlashcardCard,
     startFlashcardSession,
     startFlashcardSessionFiltered,
+    restartMissedSession,
     importCardsFromText,
     answerFlashcard,
     answerOpenFlashcard,
@@ -274,9 +360,17 @@ function App() {
     createCustomQuizSet,
     addCustomQuizQuestion,
     selectCustomQuizSet,
+    updateCustomQuizQuestion,
+    deleteCustomQuizQuestion,
+    deleteCustomQuizSet,
+    duplicateCustomQuizQuestion,
+    moveCustomQuizQuestion,
+    reorderCustomQuizQuestions,
     useDefend,
     useHeal,
     usePotion,
+    restartWrongAnswerChallenge,
+    returnToQuizLobby,
   } =
     useQuiz(state, setState, activeSet, showToast, hasHealer);
   const { playSound } = useSound(state.settings);
@@ -304,9 +398,9 @@ function App() {
   const prestigeThemeChoices = activeSubject.progress.ownedThemes;
   const dailyQuote = getDailyQuote(state.dayKey);
   const dailyTip = getDailyTip(state.dayKey);
-  const derivedMode = state.ui.activeView === "flashcards"
+  const derivedMode = state.ui.activeView === "flashcards" || state.ui.activeView === "flashcards-builder" || state.ui.activeView === "builder-studio"
     ? "travelling"
-    : state.ui.activeView === "quiz"
+    : state.ui.activeView === "quiz" || state.ui.activeView === "quiz-builder"
       ? "bossBattle"
       : state.timer.mode === "focus"
         ? "focus"
@@ -1389,6 +1483,33 @@ function App() {
     }));
   }
 
+  function addLeitnerReminders(reminders) {
+    if (!Array.isArray(reminders) || !reminders.length) {
+      showToast("No due Leitner reminders to add");
+      return;
+    }
+
+    setState((current) => {
+      const existing = current.calendar?.examDates ?? [];
+      const existingKeys = new Set(existing.map((entry) => entry.reminderKey ?? `${entry.date}|${entry.label}`));
+      const nextReminders = reminders.filter((entry) => !existingKeys.has(entry.reminderKey ?? `${entry.date}|${entry.label}`));
+
+      if (!nextReminders.length) {
+        return current;
+      }
+
+      return {
+        ...current,
+        calendar: {
+          ...current.calendar,
+          examDates: [...nextReminders, ...existing],
+        },
+      };
+    });
+
+    showToast(`Leitner reminders synced (${reminders.length})`);
+  }
+
   function addNoteItem(note) {
     setState((current) => ({
       ...current,
@@ -1431,6 +1552,60 @@ function App() {
         ),
       },
     }));
+  }
+
+  function playAnswerSound(isCorrect) {
+    const mode = state.settings?.feedbackMode ?? "standard";
+    if (isCorrect === true) {
+      answerComboRef.current += 1;
+    } else if (isCorrect === false) {
+      answerComboRef.current = 0;
+    }
+
+    if (isCorrect === true) {
+      playSound("quiz-correct");
+      if (mode === "epic") {
+        if (answerComboRef.current >= 10) {
+          playSound("combo-legend");
+        } else if (answerComboRef.current >= 5) {
+          playSound("combo-large");
+        } else if (answerComboRef.current >= 2) {
+          playSound("combo-small");
+        }
+      } else if (mode === "standard") {
+        if (answerComboRef.current >= 5) {
+          playSound("combo-large");
+        } else if (answerComboRef.current >= 3) {
+          playSound("combo-small");
+        }
+      }
+    } else if (isCorrect === false) {
+      playSound("quiz-wrong");
+    }
+  }
+
+  function answerFlashcardWithSound(choice) {
+    const result = answerFlashcard(choice);
+    playAnswerSound(result);
+    return result;
+  }
+
+  function answerOpenFlashcardWithSound(text) {
+    const result = answerOpenFlashcard(text);
+    playAnswerSound(result);
+    return result;
+  }
+
+  function answerQuizWithSound(choice) {
+    const result = answerQuiz(choice);
+    playAnswerSound(result);
+    return result;
+  }
+
+  function answerOpenQuestionWithSound(text) {
+    const result = answerOpenQuestion(text);
+    playAnswerSound(result);
+    return result;
   }
 
   function toggleTagNote(noteId, tag) {
@@ -1693,7 +1868,7 @@ function App() {
         currentTheme={currentTheme}
         prestigeThemeChoices={prestigeThemeChoices}
         streak={state.streak}
-        dailyQuote={dailyQuote}
+        dailyQuote={getDailyMotivation(state.dayKey)}
         dailyTip={dailyTip}
         importFileRef={importFileRef}
         journalPreview={journalPreview}
@@ -1733,20 +1908,448 @@ function App() {
         onUpdateNoteItem={updateNoteItem}
         onTogglePin={togglePinNote}
         onToggleTag={toggleTagNote}
+        plannerCompletion={plannerCompletion}
+        plannerDraft={plannerDraft}
+        onSetPlannerDraft={setPlannerDraft}
+        onAddPlannerMission={addPlannerMission}
+        onToggleMissionStatus={toggleMissionStatus}
+        onDeletePlannerMission={deletePlannerMission}
       />
     );
+  }
+
+  async function handleAIGenerateFlashcards({ provider, apiKey, sourceText, sourceFile, cardCount = 12, createSetTitle }) {
+    const startedAt = Date.now();
+    try {
+      setAiBusy(true);
+      setAiStatus((current) => ({
+        ...current,
+        flashcards: {
+          state: "running",
+          badge: "AI-RUN",
+          message: "Generating flashcards...",
+          provider: provider || "auto",
+        },
+      }));
+      const cards = await generateFlashcardsAI({
+        provider,
+        apiKey,
+        sourceText,
+        sourceFile,
+        cardCount,
+      });
+
+      if (!cards.length) {
+        showToast("AI returned no cards");
+        setAiStatus((current) => ({
+          ...current,
+          flashcards: {
+            state: "error",
+            badge: "AI-EMPTY",
+            message: "No flashcards were returned.",
+            provider: provider || "auto",
+          },
+        }));
+        return;
+      }
+
+      setState((current) => {
+        const targetSetId = createSetTitle?.trim()
+          ? `set-ai-${Date.now()}`
+          : current.flashcards.activeSetId;
+
+        const nextSet = createSetTitle?.trim()
+          ? {
+              id: targetSetId,
+              title: createSetTitle.trim(),
+              subjectKey: current.activeSubject,
+              cards,
+            }
+          : null;
+
+        const nextSets = createSetTitle?.trim()
+          ? [nextSet, ...current.flashcards.sets]
+          : current.flashcards.sets.map((setEntry) => (
+              setEntry.id === current.flashcards.activeSetId
+                ? { ...setEntry, cards: [...cards, ...(setEntry.cards ?? [])] }
+                : setEntry
+            ));
+
+        return {
+          ...current,
+          flashcards: {
+            ...current.flashcards,
+            sets: nextSets,
+            activeSetId: targetSetId,
+          },
+        };
+      });
+
+      setAiStatus((current) => ({
+        ...current,
+        flashcards: {
+          state: "success",
+          badge: Array.isArray(cards?._providerTrail) && cards._providerTrail.length > 1 ? "AI-FALLBACK" : "AI-OK",
+          message: Array.isArray(cards?._providerTrail) && cards._providerTrail.length > 1
+            ? `Generated ${cards.length} flashcards after provider switch ${cards._providerTrail[0]} -> ${cards._providerTrail[1]}.`
+            : `Generated ${cards.length} flashcards.`,
+          provider: cards?._providerUsed || provider || "auto",
+        },
+      }));
+      setAiHealthLog((current) => {
+        const elapsed = Date.now() - startedAt;
+        const latencyClass = elapsed < 2000 ? "fast" : elapsed < 6000 ? "medium" : "slow";
+        const fallbackUsed = Array.isArray(cards?._providerTrail) && cards._providerTrail.length > 1;
+        const next = [
+          {
+            id: `ai-log-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            surface: "flashcards",
+            status: "success",
+            badge: fallbackUsed ? "AI-FALLBACK" : "AI-OK",
+            provider: cards?._providerUsed || provider || "auto",
+            fallbackUsed,
+            latencyClass,
+            elapsedMs: elapsed,
+            message: fallbackUsed
+              ? `Fallback used: ${cards._providerTrail[0]} -> ${cards._providerTrail[1]}`
+              : "Generated flashcards",
+            time: Date.now(),
+          },
+          ...current,
+        ];
+        return next.slice(0, 5);
+      });
+      showToast(`AI generated ${cards.length} flashcards`);
+    } catch (error) {
+      const details = formatAIError(error);
+      setAiStatus((current) => ({
+        ...current,
+        flashcards: {
+          state: "error",
+          badge: details.badge,
+          message: details.message,
+          provider: error?.meta?.provider || provider || "auto",
+        },
+      }));
+      setAiHealthLog((current) => {
+        const elapsed = Date.now() - startedAt;
+        const latencyClass = elapsed < 2000 ? "fast" : elapsed < 6000 ? "medium" : "slow";
+        const next = [
+          {
+            id: `ai-log-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            surface: "flashcards",
+            status: "error",
+            badge: details.badge,
+            provider: error?.meta?.provider || provider || "auto",
+            fallbackUsed: false,
+            latencyClass,
+            elapsedMs: elapsed,
+            message: details.message,
+            time: Date.now(),
+          },
+          ...current,
+        ];
+        return next.slice(0, 5);
+      });
+      showToast(`AI error: ${details.message}`);
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  async function handleAIGenerateQuiz({ provider, apiKey, sourceText, sourceFile, questionCount = 10, title }) {
+    const startedAt = Date.now();
+    try {
+      setAiBusy(true);
+      setAiStatus((current) => ({
+        ...current,
+        quiz: {
+          state: "running",
+          badge: "AI-RUN",
+          message: "Generating quiz questions...",
+          provider: provider || "auto",
+        },
+      }));
+      const questions = await generateQuizAI({
+        provider,
+        apiKey,
+        sourceText,
+        sourceFile,
+        questionCount,
+      });
+
+      if (!questions.length) {
+        showToast("AI returned no quiz questions");
+        setAiStatus((current) => ({
+          ...current,
+          quiz: {
+            state: "error",
+            badge: "AI-EMPTY",
+            message: "No quiz questions were returned.",
+            provider: provider || "auto",
+          },
+        }));
+        return;
+      }
+
+      const setId = `quiz-set-ai-${Date.now()}`;
+      const nextSet = {
+        id: setId,
+        title: title?.trim() || "AI Generated Quiz Set",
+        cards: questions,
+        createdAt: Date.now(),
+      };
+
+      setState((current) => ({
+        ...current,
+        quiz: {
+          ...current.quiz,
+          activeCustomSetId: setId,
+          customSets: [nextSet, ...(current.quiz.customSets ?? [])],
+        },
+        ui: {
+          ...current.ui,
+          activeView: "quiz",
+        },
+      }));
+
+      setAiStatus((current) => ({
+        ...current,
+        quiz: {
+          state: "success",
+          badge: Array.isArray(questions?._providerTrail) && questions._providerTrail.length > 1 ? "AI-FALLBACK" : "AI-OK",
+          message: Array.isArray(questions?._providerTrail) && questions._providerTrail.length > 1
+            ? `Generated ${questions.length} quiz questions after provider switch ${questions._providerTrail[0]} -> ${questions._providerTrail[1]}.`
+            : `Generated ${questions.length} quiz questions.`,
+          provider: questions?._providerUsed || provider || "auto",
+        },
+      }));
+      setAiHealthLog((current) => {
+        const elapsed = Date.now() - startedAt;
+        const latencyClass = elapsed < 2000 ? "fast" : elapsed < 6000 ? "medium" : "slow";
+        const fallbackUsed = Array.isArray(questions?._providerTrail) && questions._providerTrail.length > 1;
+        const next = [
+          {
+            id: `ai-log-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            surface: "quiz",
+            status: "success",
+            badge: fallbackUsed ? "AI-FALLBACK" : "AI-OK",
+            provider: questions?._providerUsed || provider || "auto",
+            fallbackUsed,
+            latencyClass,
+            elapsedMs: elapsed,
+            message: fallbackUsed
+              ? `Fallback used: ${questions._providerTrail[0]} -> ${questions._providerTrail[1]}`
+              : "Generated quiz questions",
+            time: Date.now(),
+          },
+          ...current,
+        ];
+        return next.slice(0, 5);
+      });
+      showToast(`AI generated ${questions.length} quiz questions`);
+    } catch (error) {
+      const details = formatAIError(error);
+      setAiStatus((current) => ({
+        ...current,
+        quiz: {
+          state: "error",
+          badge: details.badge,
+          message: details.message,
+          provider: error?.meta?.provider || provider || "auto",
+        },
+      }));
+      setAiHealthLog((current) => {
+        const elapsed = Date.now() - startedAt;
+        const latencyClass = elapsed < 2000 ? "fast" : elapsed < 6000 ? "medium" : "slow";
+        const next = [
+          {
+            id: `ai-log-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            surface: "quiz",
+            status: "error",
+            badge: details.badge,
+            provider: error?.meta?.provider || provider || "auto",
+            fallbackUsed: false,
+            latencyClass,
+            elapsedMs: elapsed,
+            message: details.message,
+            time: Date.now(),
+          },
+          ...current,
+        ];
+        return next.slice(0, 5);
+      });
+      showToast(`AI error: ${details.message}`);
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  async function handleAIGenerateStudyPlan({ provider, apiKey, sourceText, sourceFile }) {
+    const startedAt = Date.now();
+    try {
+      setAiBusy(true);
+      setAiStatus((current) => ({
+        ...current,
+        studyPlan: {
+          state: "running",
+          badge: "AI-RUN",
+          message: "Generating study plan...",
+          provider: provider || "auto",
+        },
+      }));
+      const plan = await generateStudyPlanAI({ provider, apiKey, sourceText, sourceFile });
+      const summary = String(plan?.summary ?? "AI plan generated").slice(0, 140);
+      setAiStatus((current) => ({
+        ...current,
+        studyPlan: {
+          state: "success",
+          badge: Array.isArray(plan?._providerTrail) && plan._providerTrail.length > 1 ? "AI-FALLBACK" : "AI-OK",
+          message: Array.isArray(plan?._providerTrail) && plan._providerTrail.length > 1
+            ? `${summary || "AI plan generated"} (provider switch ${plan._providerTrail[0]} -> ${plan._providerTrail[1]})`
+            : (summary || "AI plan generated"),
+          provider: plan?._providerUsed || provider || "auto",
+        },
+      }));
+      setAiHealthLog((current) => {
+        const elapsed = Date.now() - startedAt;
+        const latencyClass = elapsed < 2000 ? "fast" : elapsed < 6000 ? "medium" : "slow";
+        const fallbackUsed = Array.isArray(plan?._providerTrail) && plan._providerTrail.length > 1;
+        const next = [
+          {
+            id: `ai-log-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            surface: "studyPlan",
+            status: "success",
+            badge: fallbackUsed ? "AI-FALLBACK" : "AI-OK",
+            provider: plan?._providerUsed || provider || "auto",
+            fallbackUsed,
+            latencyClass,
+            elapsedMs: elapsed,
+            message: fallbackUsed
+              ? `Fallback used: ${plan._providerTrail[0]} -> ${plan._providerTrail[1]}`
+              : "Generated study plan",
+            time: Date.now(),
+          },
+          ...current,
+        ];
+        return next.slice(0, 5);
+      });
+      showToast(summary || "AI plan generated");
+      return plan;
+    } catch (error) {
+      const details = formatAIError(error);
+      setAiStatus((current) => ({
+        ...current,
+        studyPlan: {
+          state: "error",
+          badge: details.badge,
+          message: details.message,
+          provider: error?.meta?.provider || provider || "auto",
+        },
+      }));
+      setAiHealthLog((current) => {
+        const elapsed = Date.now() - startedAt;
+        const latencyClass = elapsed < 2000 ? "fast" : elapsed < 6000 ? "medium" : "slow";
+        const next = [
+          {
+            id: `ai-log-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            surface: "studyPlan",
+            status: "error",
+            badge: details.badge,
+            provider: error?.meta?.provider || provider || "auto",
+            fallbackUsed: false,
+            latencyClass,
+            elapsedMs: elapsed,
+            message: details.message,
+            time: Date.now(),
+          },
+          ...current,
+        ];
+        return next.slice(0, 5);
+      });
+      showToast(`AI error: ${details.message}`);
+      return null;
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  const weakAreaCount = useMemo(() => {
+    const missedFlashIds = new Set(state.flashcards?.lastSession?.missedCardIds ?? []);
+    const wrongQuizIds = new Set((state.quiz?.session?.wrongAnswers ?? []).map((entry) => entry.id).filter(Boolean));
+    return missedFlashIds.size + wrongQuizIds.size;
+  }, [state.flashcards?.lastSession?.missedCardIds, state.quiz?.session?.wrongAnswers]);
+
+  function handlePracticeWeakAreas() {
+    setState((current) => {
+      const missedFlashIds = new Set(current.flashcards?.lastSession?.missedCardIds ?? []);
+      const flashMisses = (current.flashcards?.sets ?? [])
+        .flatMap((setEntry) => (setEntry.cards ?? []).map((card) => ({ ...card, sourceLabel: setEntry.title })))
+        .filter((card) => missedFlashIds.has(card.id));
+
+      const wrongQuizItems = (current.quiz?.session?.wrongAnswers ?? []).map((entry, index) => ({
+        id: `weak-quiz-${entry.id ?? index}`,
+        question: entry.question,
+        answer: entry.correctAnswer,
+        choices: entry.type === "true-false" ? ["True", "False"] : [entry.correctAnswer],
+        type: entry.type === "true-false" ? "true-false" : "basic",
+        explanation: entry.explanation ?? null,
+        sourceLabel: "Quiz Recovery",
+      }));
+
+      const deck = [...flashMisses, ...wrongQuizItems].sort(() => Math.random() - 0.5);
+      if (!deck.length) {
+        showToast("No weak areas available yet");
+        return current;
+      }
+
+      showToast(`Practice Weak Areas started (${deck.length})`);
+      return {
+        ...current,
+        flashcards: {
+          ...current.flashcards,
+          session: {
+            index: 0,
+            deck,
+            correct: 0,
+            answered: 0,
+            reveal: false,
+            missedCardIds: [],
+          },
+        },
+        ui: {
+          ...current.ui,
+          activeView: "flashcards",
+        },
+      };
+    });
   }
 
   function renderParty() {
     return <PartyViewer party={state.partyRoster} />;
   }
 
-  function renderShop() {
+  function renderAvatarShop() {
     if (!accountProfile) {
       return null;
     }
 
-    return <ShopUI userProfile={accountProfile} onPurchase={handleShopPurchase} />;
+    return (
+      <AvatarShopPage
+        profile={state.profile}
+        petProfile={state.petProfile}
+        avatarClasses={AVATAR_CLASSES}
+        hairStyles={HAIR_STYLES}
+        outfitStyles={OUTFIT_STYLES}
+        petSpecies={PET_SPECIES}
+        petColors={PET_COLORS}
+        petAuras={PET_AURAS}
+        userProfile={accountProfile}
+        onUpdateAvatarField={updateAvatarField}
+        onUpdatePetField={updatePetField}
+        onPurchase={handleShopPurchase}
+      />
+    );
   }
 
   function renderAchievements() {
@@ -1757,13 +2360,16 @@ function App() {
         quiz={state.quiz}
         flashcards={state.flashcards}
         streak={state.streak}
+        state={state}
+        sessionHistory={state.sessionHistory ?? []}
       />
     );
   }
 
-  function renderFlashcards() {
+  function renderFlashcards(pageMode = "study") {
     return (
       <FlashcardsPage
+        pageMode={pageMode}
         state={state}
         activeSet={activeSet}
         flashSession={flashSession}
@@ -1780,100 +2386,117 @@ function App() {
         onSetEditingCardId={setEditingCardId}
         onSetStudyFilter={setStudyFilter}
         onAddFlashcardSet={addFlashcardSet}
+        onOpenFlashcardsBuilder={() => {
+          setBuilderStudioTab("flashcards");
+          setState((current) => ({ ...current, ui: { ...current.ui, activeView: "builder-studio" } }));
+        }}
         onSelectSet={(setId) => setState((current) => ({ ...current, flashcards: { ...current.flashcards, activeSetId: setId } }))}
         onDeleteSet={deleteFlashcardSet}
         onAddFlashcardCard={addFlashcardCard}
+        onDuplicateCard={duplicateFlashcardCard}
+        onMoveCard={moveFlashcardCard}
+        onReorderCards={reorderFlashcardCards}
         onDeleteCard={deleteFlashcardCard}
         onUpdateCard={updateFlashcardCard}
         onStartFlashcardSession={startFlashcardSession}
         onStartFiltered={startFlashcardSessionFiltered}
-        onAnswerFlashcard={answerFlashcard}
-        onAnswerOpenFlashcard={answerOpenFlashcard}
+        onRestartMissedSession={restartMissedSession}
+        onAnswerFlashcard={answerFlashcardWithSound}
+        onAnswerOpenFlashcard={answerOpenFlashcardWithSound}
         onRateFlashcard={rateFlashcard}
         onNextFlashcard={nextFlashcard}
         onImportCards={importCards}
         onExportCards={exportCards}
         onImportFromText={importCardsFromText}
+        onAIGenerateFlashcards={handleAIGenerateFlashcards}
+        aiBusy={aiBusy}
+        aiStatus={aiStatus.flashcards}
+        aiHealthLog={aiHealthLog}
+        onClearAIHealthLog={() => setAiHealthLog([])}
+        weakAreaCount={weakAreaCount}
+        onPracticeWeakAreas={handlePracticeWeakAreas}
+        soundEnabled={state.settings.soundEnabled}
+        onToggleSoundEffects={() => updateSetting("soundEnabled", !state.settings.soundEnabled)}
       />
     );
   }
 
-  function renderQuiz() {
+  function renderQuiz(pageMode = "battle") {
     return (
       <QuizBattlePage
+        pageMode={pageMode}
         quizSession={quizSession}
         quizQuestion={quizQuestion}
         quizState={state.quiz}
         accuracy={accuracy}
         onStartQuizBattle={startQuizBattle}
         onStartSpeedRun={startSpeedRun}
-        onAnswerQuiz={answerQuiz}
-        onAnswerOpenQuestion={answerOpenQuestion}
+        onAnswerQuiz={answerQuizWithSound}
+        onAnswerOpenQuestion={answerOpenQuestionWithSound}
         onUseFiftyFifty={useFiftyFifty}
         onUseExtraTime={useExtraTime}
         onUseDefend={useDefend}
         onUseHeal={useHeal}
         onUsePotion={usePotion}
+        onRestartWrongAnswerChallenge={restartWrongAnswerChallenge}
+        onReturnToQuizLobby={returnToQuizLobby}
         customQuizSets={customQuizSets}
         activeCustomSet={activeCustomSet}
         onCreateCustomQuizSet={createCustomQuizSet}
         onAddCustomQuizQuestion={addCustomQuizQuestion}
         onSelectCustomQuizSet={selectCustomQuizSet}
+        onUpdateCustomQuizQuestion={updateCustomQuizQuestion}
+        onDeleteCustomQuizQuestion={deleteCustomQuizQuestion}
+        onDeleteCustomQuizSet={deleteCustomQuizSet}
+        onDuplicateCustomQuizQuestion={duplicateCustomQuizQuestion}
+        onMoveCustomQuizQuestion={moveCustomQuizQuestion}
+        onReorderCustomQuizQuestions={reorderCustomQuizQuestions}
+        onAIGenerateQuiz={handleAIGenerateQuiz}
+        onAIGenerateStudyPlan={handleAIGenerateStudyPlan}
+        aiBusy={aiBusy}
+        aiQuizStatus={aiStatus.quiz}
+        aiPlanStatus={aiStatus.studyPlan}
+        aiHealthLog={aiHealthLog}
+        onClearAIHealthLog={() => setAiHealthLog([])}
+        weakAreaCount={weakAreaCount}
+        onPracticeWeakAreas={handlePracticeWeakAreas}
         partyRoster={state.partyRoster}
+        userDisplayName={accountProfile?.displayName ?? "Guild Cadet"}
+        userProfile={accountProfile}
+        onUpdateUserProfile={updateUserProfile}
+        soundEnabled={state.settings.soundEnabled}
+        onToggleSoundEffects={() => updateSetting("soundEnabled", !state.settings.soundEnabled)}
       />
     );
   }
 
-  function renderCustomization() {
+  function renderBuilderStudio() {
     return (
-      <CustomizationPage
-        profile={state.profile}
-        petProfile={state.petProfile}
-        avatarClasses={AVATAR_CLASSES}
-        hairStyles={HAIR_STYLES}
-        outfitStyles={OUTFIT_STYLES}
-        petSpecies={PET_SPECIES}
-        petColors={PET_COLORS}
-        petAuras={PET_AURAS}
-        onUpdateAvatarField={updateAvatarField}
-        onUpdatePetField={updatePetField}
-      />
-    );
-  }
-
-  function renderAnalytics() {
-    return (
-      <AnalyticsPage
-        season={state.season}
-        accuracy={accuracy}
-        quiz={state.quiz}
-        petProfile={state.petProfile}
-        activeSubject={activeSubject}
-        flashcardSets={state.flashcards.sets}
-        streak={state.streak}
-      />
-    );
-  }
-
-  function renderPracticeTest() {
-    return (
-      <PracticeTestPage
-        flashcardSets={state.flashcards.sets}
-        dayKey={state.dayKey}
-      />
-    );
-  }
-
-  function renderProgress() {
-    return (
-      <ProgressPage
-        state={state}
-        subjects={state.subjects}
-        flashcardSets={state.flashcards.sets}
-        quizState={state.quiz}
-        streak={state.streak}
-        sessionHistory={state.sessionHistory ?? []}
-      />
+      <section className="feature-page builder-studio-page">
+        <article className="panel builder-studio-head">
+          <div>
+            <h2>Builder Studio</h2>
+            <p className="muted">All builders and AI generation live here for a focused content workflow.</p>
+          </div>
+          <div className="fc-tabs" style={{ marginBottom: 0 }}>
+            <button
+              type="button"
+              className={`fc-tab ${builderStudioTab === "flashcards" ? "is-active" : ""}`}
+              onClick={() => setBuilderStudioTab("flashcards")}
+            >
+              Flashcards Builder
+            </button>
+            <button
+              type="button"
+              className={`fc-tab ${builderStudioTab === "quiz" ? "is-active" : ""}`}
+              onClick={() => setBuilderStudioTab("quiz")}
+            >
+              Quiz + AI Builder
+            </button>
+          </div>
+        </article>
+        {builderStudioTab === "flashcards" ? renderFlashcards("builder") : renderQuiz("builder")}
+      </section>
     );
   }
 
@@ -1888,6 +2511,55 @@ function App() {
         onToggleMissionStatus={toggleMissionStatus}
         onDeletePlannerMission={deletePlannerMission}
       />
+    );
+  }
+
+  function renderFriends() {
+    return (
+      <section className="feature-page friends-page">
+        <article className="panel" style={{ marginBottom: "20px" }}>
+          <div className="feature-header">
+            <h2>Friends</h2>
+            <p className="muted">Connect with other scholars and grow together</p>
+          </div>
+        </article>
+
+        <div className="feature-grid">
+          <article className="panel">
+            <h3>Invite a Friend</h3>
+            <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+              <input 
+                type="text" 
+                placeholder="Enter friend's guild name..." 
+                style={{ flex: 1, padding: "8px", backgroundColor: "rgba(11,7,20,0.6)", border: "1px solid rgba(214,176,92,0.25)", borderRadius: "8px", color: "#f7ecd0" }}
+              />
+              <button className="accent-button">Send Invite</button>
+            </div>
+            <p className="muted" style={{ fontSize: "0.9rem" }}>Share your guild code: <strong>GLD-2026-ALGO7</strong></p>
+          </article>
+
+          <article className="panel">
+            <h3>Friend Requests</h3>
+            <div className="muted" style={{ padding: "20px", textAlign: "center" }}>No pending requests</div>
+          </article>
+
+          <article className="panel" style={{ gridColumn: "1 / -1" }}>
+            <h3>Your Friends (2)</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px" }}>
+              <div style={{ padding: "12px", backgroundColor: "rgba(255,211,108,0.1)", borderRadius: "12px", border: "1px solid rgba(214,176,92,0.2)" }}>
+                <strong>SageWalker</strong>
+                <div className="muted" style={{ fontSize: "0.85rem", marginTop: "4px" }}>Level 12 • Alchemy</div>
+                <button className="ghost-button" style={{ marginTop: "8px", width: "100%" }}>View Profile</button>
+              </div>
+              <div style={{ padding: "12px", backgroundColor: "rgba(255,179,71,0.1)", borderRadius: "12px", border: "1px solid rgba(214,176,92,0.2)" }}>
+                <strong>RuneMaster</strong>
+                <div className="muted" style={{ fontSize: "0.85rem", marginTop: "4px" }}>Level 9 • Chronicles</div>
+                <button className="ghost-button" style={{ marginTop: "8px", width: "100%" }}>View Profile</button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
     );
   }
 
@@ -1906,50 +2578,125 @@ function App() {
     );
   }
 
+  function renderStudyMethods(forcedTab = null) {
+    return (
+      <StudyMethodsPage
+        forcedTab={forcedTab}
+        deployStamp={deployStamp}
+        studyLab={state.studyLab}
+        flashcardSets={state.flashcards.sets}
+        subjects={state.subjects}
+        dayKey={state.dayKey}
+        onCreateLeitnerReminders={addLeitnerReminders}
+        onToast={showToast}
+        onUpdateStudyLab={(updater) => {
+          setState((current) => ({
+            ...current,
+            studyLab: typeof updater === "function"
+              ? updater(current.studyLab ?? {})
+              : { ...(current.studyLab ?? {}), ...updater },
+          }));
+        }}
+      />
+    );
+  }
+
+  const studySuiteStats = useMemo(() => {
+    const studyLab = state.studyLab ?? {};
+    const allCards = (state.flashcards?.sets ?? []).flatMap((setEntry) => setEntry.cards ?? []);
+    const dueLeitner = allCards.filter((card) => !card.dueDay || card.dueDay <= state.dayKey).length;
+    const sq3rCount = (studyLab.sq3rEntries ?? []).length;
+    const blurtingRuns = (studyLab.blurting?.history ?? []).length;
+    const interleavingTopics = [
+      ...new Set([
+        ...(studyLab.interleaving?.customTopics ?? []),
+        ...(state.flashcards?.sets ?? []).map((setEntry) => setEntry.title).filter(Boolean),
+      ]),
+    ].length;
+    const secondBrainNotes = (studyLab.secondBrainNotes ?? []).length;
+    const codeTraceNotes = (studyLab.codeTrace?.annotations ?? []).length;
+
+    const activeMethods = [
+      dueLeitner > 0,
+      sq3rCount > 0,
+      blurtingRuns > 0,
+      interleavingTopics > 0,
+      secondBrainNotes > 0,
+      codeTraceNotes > 0,
+    ].filter(Boolean).length;
+
+    return {
+      studylab: activeMethods,
+      "study-leitner": dueLeitner,
+      "study-sq3r": sq3rCount,
+      "study-blurting": blurtingRuns,
+      "study-interleaving": interleavingTopics,
+      "study-secondbrain": secondBrainNotes,
+      "study-codetrace": codeTraceNotes,
+    };
+  }, [state.studyLab, state.flashcards?.sets, state.dayKey]);
+
   // eslint-disable-next-line no-unreachable
   function renderActiveView() {
+    const studyMethodViewMap = {
+      "study-leitner": "leitner",
+      "study-sq3r": "sq3r",
+      "study-blurting": "blurting",
+      "study-interleaving": "interleaving",
+      "study-secondbrain": "second-brain",
+      "study-codetrace": "code-trace",
+    };
+
+    const mappedStudyTab = studyMethodViewMap[state.ui.activeView];
+    if (mappedStudyTab) {
+      return renderStudyMethods(mappedStudyTab);
+    }
+
     if (state.ui.activeView === "profile") {
       return renderProfile();
+    }
+
+    if (state.ui.activeView === "studylab") {
+      return renderStudyMethods();
     }
 
     if (state.ui.activeView === "party") {
       return renderParty();
     }
 
-    if (state.ui.activeView === "shop") {
-      return renderShop();
+    if (state.ui.activeView === "shop" || state.ui.activeView === "customize") {
+      return renderAvatarShop();
     }
 
     if (state.ui.activeView === "achievements") {
       return renderAchievements();
     }
 
+    if (state.ui.activeView === "dashboard") {
+      return renderDashboard();
+    }
     if (state.ui.activeView === "flashcards") {
-      return renderFlashcards();
+      return renderFlashcards("study");
+    }
+
+    if (state.ui.activeView === "flashcards-builder") {
+      return renderBuilderStudio();
     }
 
     if (state.ui.activeView === "quiz") {
-      return renderQuiz();
+      return renderQuiz("battle");
     }
 
-    if (state.ui.activeView === "customize") {
-      return renderCustomization();
-    }
-
-    if (state.ui.activeView === "analytics") {
-      return renderAnalytics();
-    }
-
-    if (state.ui.activeView === "practicetest") {
-      return renderPracticeTest();
-    }
-
-    if (state.ui.activeView === "progress") {
-      return renderProgress();
+    if (state.ui.activeView === "quiz-builder" || state.ui.activeView === "builder-studio") {
+      return renderBuilderStudio();
     }
 
     if (state.ui.activeView === "planner") {
       return renderPlanner();
+    }
+
+    if (state.ui.activeView === "friends") {
+      return renderFriends();
     }
 
     return renderDashboard();
@@ -1962,6 +2709,7 @@ function App() {
   if (!isAuthenticated) {
     return (
       <AuthScreen
+        deployStamp={deployStamp}
         onLogin={login}
         onSignup={signup}
         onRequestPasswordReset={requestPasswordReset}
@@ -1978,6 +2726,8 @@ function App() {
       <SidebarNav
         activeView={state.ui.activeView}
         seasonTitle={state.season.title}
+        deployStamp={deployStamp}
+        studySuiteStats={studySuiteStats}
         onSetActiveView={setActiveView}
         collapsed={Boolean(state.ui.sidebarCollapsed)}
         onToggleCollapse={toggleSidebar}
@@ -2016,6 +2766,14 @@ function App() {
         <Suspense fallback={<section className="panel">Loading section...</section>}>
           {renderActiveView()}
         </Suspense>
+        <MusicPlayer
+          isEnabled={Boolean(state.settings.musicEnabled)}
+          onToggleEnabled={(enabled) => updateSetting("musicEnabled", enabled)}
+          volume={Number(state.settings.musicVolume ?? 40)}
+          onVolumeChange={(value) => updateSetting("musicVolume", Math.max(0, Math.min(100, value)))}
+          isMuted={Boolean(state.settings.musicMuted)}
+          onToggleMute={(muted) => updateSetting("musicMuted", muted)}
+        />
         {showTutorial ? (
           <Suspense fallback={null}>
             <TutorialOverlay

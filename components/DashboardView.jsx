@@ -3,6 +3,8 @@ import CalendarPage from "./CalendarPage";
 import CompanionPanel from "./CompanionPanel";
 import HeroPanel from "./HeroPanel";
 import LeaderboardPage from "./LeaderboardPage";
+import ManaBar from "./ManaBar";
+import MissionsPanel from "./MissionsPanel";
 import NotesPage from "./NotesPage";
 import QuestPanel from "./QuestPanel";
 import TimerPanel from "./TimerPanel";
@@ -93,6 +95,12 @@ function DashboardView({
   onUpdateNoteItem,
   onTogglePin,
   onToggleTag,
+  plannerCompletion,
+  plannerDraft,
+  onSetPlannerDraft,
+  onAddPlannerMission,
+  onToggleMissionStatus,
+  onDeletePlannerMission,
 }) {
   const [hiddenWidgets, setHiddenWidgets] = useState([]);
   const [maximizedWidget, setMaximizedWidget] = useState(null);
@@ -126,6 +134,32 @@ function DashboardView({
     () => ["leaderboard", "calendar", "notes"].filter((id) => !hiddenWidgets.includes(id)),
     [hiddenWidgets],
   );
+  const weakTopicRows = useMemo(() => {
+    const flashTopics = Object.entries(state.flashcards?.weakStats?.byTopic ?? {}).map(([topic, count]) => ({
+      topic,
+      count,
+      source: "Flashcards",
+    }));
+    const quizTopics = Object.entries(state.quiz?.weakStats?.byTopic ?? {}).map(([topic, count]) => ({
+      topic,
+      count,
+      source: "Quiz",
+    }));
+
+    return [...flashTopics, ...quizTopics]
+      .sort((left, right) => right.count - left.count)
+      .slice(0, 4);
+  }, [state.flashcards?.weakStats?.byTopic, state.quiz?.weakStats?.byTopic]);
+  const weakTypeRows = useMemo(() => {
+    const merged = {};
+    for (const [type, count] of Object.entries(state.flashcards?.weakStats?.byType ?? {})) {
+      merged[type] = (merged[type] ?? 0) + count;
+    }
+    for (const [type, count] of Object.entries(state.quiz?.weakStats?.byType ?? {})) {
+      merged[type] = (merged[type] ?? 0) + count;
+    }
+    return Object.entries(merged).sort((left, right) => right[1] - left[1]).slice(0, 3);
+  }, [state.flashcards?.weakStats?.byType, state.quiz?.weakStats?.byType]);
 
   function hideWidget(id) {
     setHiddenWidgets((current) => (current.includes(id) ? current : [...current, id]));
@@ -266,68 +300,6 @@ function DashboardView({
             compactMode={todayMode}
             showSecondary={showSecondary}
           />
-
-          <section className="panel dashboard-utility-grid" data-tutorial="study-hub">
-            <div className="dashboard-utility-topbar">
-              <h3>Study Hub Widgets</h3>
-              <div className="dashboard-action-row dashboard-action-row--inline">
-                <button type="button" className={`ghost-button ${todayMode ? "is-active" : ""}`} onClick={() => setTodayMode((value) => !value)}>
-                  {todayMode ? "Exit Today Mode" : "Today Mode"}
-                </button>
-                <button type="button" className={`ghost-button ${showSecondary ? "is-active" : ""}`} onClick={() => setShowSecondary((value) => !value)}>
-                  {showSecondary ? "Hide Secondary" : "Show Secondary"}
-                </button>
-              </div>
-            </div>
-
-            {visibleWidgets.includes("leaderboard") ? (
-              <article className="dashboard-utility-card dashboard-utility-card--large" data-tutorial="leaderboard-card">
-                {widgetHeader("Leaderboard Snapshot", "Top 5", "leaderboard")}
-                <div className="dashboard-utility-list">
-                  {leaderboardPreview.slice(0, 5).map((entry, index) => (
-                    <div key={`${entry.userId}-${index}`} className="dashboard-row">
-                      <span>#{index + 1} {entry.displayName}</span>
-                      <strong>{entry.score}</strong>
-                    </div>
-                  ))}
-                </div>
-              </article>
-            ) : null}
-
-            {visibleWidgets.includes("calendar") ? (
-              <article className="dashboard-utility-card dashboard-utility-card--large" data-tutorial="calendar-card">
-                {widgetHeader("Upcoming Exams", String(upcomingExams.length), "calendar")}
-                <div className="dashboard-utility-list">
-                  {upcomingExams.length ? upcomingExams.map((exam, index) => (
-                    <div key={`${exam.date}-${exam.label}-${index}`} className="dashboard-row">
-                      <span>{exam.label}</span>
-                      <strong>{exam.date}</strong>
-                    </div>
-                  )) : <p className="muted">No exam dates yet.</p>}
-                </div>
-              </article>
-            ) : null}
-
-            {visibleWidgets.includes("notes") ? (
-              <article className="dashboard-utility-card dashboard-utility-card--large" data-tutorial="notes-card">
-                {widgetHeader("Recent Notes", String(notesItems.length), "notes")}
-                <div className="dashboard-utility-list">
-                  {recentNotes.length ? recentNotes.map((note) => (
-                    <div key={note.id} className="dashboard-row dashboard-row--stacked">
-                      <strong>{note.title}</strong>
-                      <span>{(note.body ?? note.content ?? "").slice(0, 112) || "No content"}</span>
-                    </div>
-                  )) : <p className="muted">No notes captured yet.</p>}
-                </div>
-              </article>
-            ) : null}
-
-            {!visibleWidgets.length ? (
-              <article className="dashboard-utility-card">
-                <p className="muted">All widgets are hidden. Use Restore Widgets to bring them back.</p>
-              </article>
-            ) : null}
-          </section>
         </div>
 
         {/* Side column: timer + companion */}
